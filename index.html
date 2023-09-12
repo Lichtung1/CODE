@@ -5,17 +5,13 @@
 </head>
 <body>
     <h1>Welcome to my Python Web App</h1>
-    <button id="runPython">Run Python Script</button>
+    <button id="openODESolver">Open ODE Solver App</button>
     <div id="output"></div>
 
     <script>
-        // JavaScript code to run the Python script
-        document.getElementById('runPython').addEventListener('click', function() {
-            fetch('/python-scripts/your_script.py')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('output').textContent = data;
-            });
+        // JavaScript code to open the ODE solver app
+        document.getElementById('openODESolver').addEventListener('click', function() {
+            window.open('https://jgrcfwegmfjthdccqjac4g.streamlit.app/#ode-solver', '_blank');
         });
     </script>
 </body>
