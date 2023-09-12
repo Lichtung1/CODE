@@ -35,9 +35,11 @@ def ode_solver(equation_str, X_1, X_2, *initial_conditions):
             ax.annotate(label, xy=(x_vals[-1], general_solution.rhs.subs(x, x_vals[0])), fontsize=10)
             general_solution_text_str += f"\n{label}: {general_solution.rhs}"
 
+        label = 'Particular Solution'
         ax.plot(x_vals, [particular_solution.rhs.subs(x, val_x) for val_x in x_vals], 'r-', label = 'Particular Solution')
-        
+        particular_solution_text_str = f"{label}: {particular_solution.rhs}"    
         ax.legend()
+        
         ax.set_title("1st Order ODE Solutions")
 
     elif "C1" in str(sol) and "C2" in str(sol):  # 2nd order
