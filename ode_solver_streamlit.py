@@ -70,7 +70,7 @@ st.title("ODE Solver")
 equation = st.text_input("Equation:", "y'(x)=x/4")
 range_str = st.text_input("Range (e.g., -10,10):", "-10,10")
 X_1, X_2 = map(float, range_str.split(','))
-conditions = st.text_input("Initial Conditions (): ", "1").split(',')
+conditions = st.text_input("Initial Conditions (e.g. comma separated 1,1 for y(0)=1, y'(0)=0 ): ", "1").split(',')
 
 if st.button('Solve'):
     try:
