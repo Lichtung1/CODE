@@ -46,10 +46,10 @@ def ode_solver(equation_str, X_1, X_2, *initial_conditions):
         particular_solution = sol.subs({C1: sp.sympify(initial_conditions[0]), C2: sp.sympify(initial_conditions[1])})
 
         if not "General" in str(sol):
-        label = 'Particular Solution'
-        ax.plot(x_vals, [particular_solution.rhs.subs(x, val_x) for val_x in x_vals], 'r-', label = 'Particular Solution')
-        particular_solution_text_str = f"{label}: {particular_solution.rhs}"    
-        ax.legend()
+            label = 'Particular Solution'
+            ax.plot(x_vals, [particular_solution.rhs.subs(x, val_x) for val_x in x_vals], 'r-', label = 'Particular Solution')
+            particular_solution_text_str = f"{label}: {particular_solution.rhs}"    
+            ax.legend()
 
         ax.set_title("2nd Order ODE Solutions")
 
