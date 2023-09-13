@@ -31,12 +31,20 @@ def ode_solver(equation_str, X_1, X_2, *initial_conditions):
         for val in C1_vals:
             general_solution = sol.subs(C1, val)
             label = f'C = {val}'
-            ax.plot(x_vals, [general_solution.rhs.subs(x, val_x) for val_x in x_vals], 'b-')
+            y_vals_general = []
+            for x_ in x_vals:
+                y = general_solution.rhs.subs(x, x_)
+                y_vals_general.append(y)
+            ax.plot(x_vals, y_vals_general, 'b-')
             ax.annotate(label, xy=(x_vals[-1], general_solution.rhs.subs(x, x_vals[0])), fontsize=10)
             general_solution_text_str += f"\n{label}: {general_solution.rhs}"
 
         label = 'Particular Solution'
-        ax.plot(x_vals, [particular_solution.rhs.subs(x, val_x) for val_x in x_vals], 'r-', label = 'Particular Solution')
+        y_vals_particular = []
+        for val_x in x_vals:
+            y = particular_solution.rhs.subs(x, val_x)
+            y_vals_particular.append(y)
+        ax.plot(x_vals, y_vals, 'b-')
         particular_solution_text_str = f"{label}: {particular_solution.rhs}"    
         ax.legend()
         
@@ -47,7 +55,11 @@ def ode_solver(equation_str, X_1, X_2, *initial_conditions):
 
         if not "General" in str(sol):
             label = 'Particular Solution'
-            ax.plot(x_vals, [particular_solution.rhs.subs(x, val_x) for val_x in x_vals], 'r-', label = 'Particular Solution')
+            y_vals_particular = []
+            for val_x in x_vals:
+                y = particular_solution.rhs.subs(x, val_x)
+                y_vals_particular.append(y)
+            ax.plot(x_vals, y_vals, 'b-')            
             particular_solution_text_str = f"{label}: {particular_solution.rhs}"    
             ax.legend()
 
