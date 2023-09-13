@@ -44,7 +44,7 @@ def ode_solver(equation_str, X_1, X_2, *initial_conditions):
         for val_x in x_vals:
             y = particular_solution.rhs.subs(x, val_x)
             y_vals_particular.append(y)
-        ax.plot(x_vals, y_vals, 'b-')
+        ax.plot(x_vals, y_vals_particular, 'b-')
         particular_solution_text_str = f"{label}: {particular_solution.rhs}"    
         ax.legend()
         
@@ -59,7 +59,7 @@ def ode_solver(equation_str, X_1, X_2, *initial_conditions):
             for val_x in x_vals:
                 y = particular_solution.rhs.subs(x, val_x)
                 y_vals_particular.append(y)
-            ax.plot(x_vals, y_vals, 'b-')            
+            ax.plot(x_vals, y_vals_particular, 'b-')            
             particular_solution_text_str = f"{label}: {particular_solution.rhs}"    
             ax.legend()
 
