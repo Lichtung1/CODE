@@ -12,7 +12,7 @@ def plot_janssen_equation(rho, g, R, k, mu, h_max):
     fig, ax = plt.subplots()
     ax.plot(h_vals, pressure_vals)
     ax.set_xlabel('Height (m)')
-    ax.set_ylabel('Pressure (Pa)')
+    ax.set_ylabel('Pressure (kPa)')
     ax.set_title('Janssen Equation')
     ax.grid(True)
 
@@ -26,7 +26,7 @@ g = st.number_input("Acceleration due to gravity (m/s^2):", value=9.81)
 R = st.number_input("Bin radius (m):", value=2.3)
 k = st.number_input("Janssen coefficient:", value=0.4)
 mu = st.number_input("Coefficient of friction:", value=0.4)
-h_max = st.number_input("Maximum height (m):", value=20.0)
+h_max = st.number_input("Maximum height (m):", value=60.0)
 
 if st.button('Plot'):
     try:
