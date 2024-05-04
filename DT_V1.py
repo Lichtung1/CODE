@@ -8,7 +8,10 @@ def calculate_bin_capacity(diameter, height):
     return np.pi * (diameter / 2) ** 2 * height
 
 def update_inventory(inventory, new_grain_data):
-    inventory = inventory.append(new_grain_data, ignore_index=True)
+    if inventory.empty:
+        inventory = new_grain_data
+    else:
+        inventory = pd.concat([inventory, new_grain_data], ignore_index=True)
     return inventory
 
 def create_bin_visualization(diameter, height, moisture_data):
