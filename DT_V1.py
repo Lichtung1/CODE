@@ -10,7 +10,7 @@ from firebase_admin import credentials, db
 if not firebase_admin._apps:
     cred = credentials.Certificate('path/to/your/firebase/credentials.json')
     firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://your-project.firebaseio.com'
+        'databaseURL': 'https://digitaltwin-8ae1d-default-rtdb.firebaseio.com'
     })
 
 def calculate_bin_capacity(diameter, height):
