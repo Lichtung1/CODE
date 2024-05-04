@@ -71,6 +71,28 @@ def create_empty_bin_visualization(diameter, height):
 
     return fig
 
+def unload_grain(inventory, mass_to_unload):
+    total_mass = inventory['Mass (tonnes)'].sum()
+    if mass_to_unload > total_mass:
+        st.warning(f"Not enough grain to unload. Short by {mass_to_unload - total_mass:.2f} tonnes.")
+        return inventory
+
+    remaining_mass = mass_to_unload
+    new_inventory = pd.DataFrame(columns=inventory.columns)
+
+    for index, row in inventory.iloc[::-1].iterrows():
+        if remaining_mass >= row['Mass (tonnes)']:
+            remaining_mass -= row['Mass (tonnes)']
+        else:
+            new_row = row.copy()
+            new_row['Mass (tonnes)'] -= remaining_mass
+            new_row['Height (m)'] = new_row['Mass (tonnes)'] * 1000 / (new_row['Test Weight (kg/m³)'] * np.pi * (bin_diameter / 2) ** 2)
+            new_inventory = pd.concat([new_inventory, pd.DataFrame(new_row).T], ignore_index=True)
+            break
+
+    new_inventory = pd.concat([new_inventory, inventory.iloc[:index]], ignore_index=True)
+    return new_inventory
+
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
 
@@ -109,6 +131,16 @@ with st.form(key='grain_input_form'):
             'Height (m)': [height]
         })
         inventory = update_inventory(inventory, new_grain_data)
+        st.session_state[f"inventory_{selected_bin}"] = inventory
+
+# Grain unload form
+with st.form(key='grain_unload_form'):
+    st.subheader("Unload Grain from Inventory")
+    mass_to_unload = st.number_input("Mass to Unload (tonnes):")
+    unload_button = st.form_submit_button(label='Unload Grain')
+
+    if unload_button:
+        inventory = unload_grain(inventory, mass_to_unload)
         st.session_state[f"inventory_{selected_bin}"] = inventory
 
 # Display bin capacity
