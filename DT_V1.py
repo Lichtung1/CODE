@@ -4,14 +4,12 @@ import pandas as pd
 import datetime
 import plotly.graph_objects as go
 import firebase_admin
-from firebase_admin import credentials, db
 
-# Initialize Firebase app (only run this once)
-if not firebase_admin._apps:
-    cred = credentials.Certificate("path/to/serviceAccountKey.json")
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://digitaltwin-8ae1d-default-rtdb.firebaseio.com'
-    })
+# Firebase project ID
+project_id = "digitaltwin-8ae1d"
+
+# Firebase Realtime Database URL
+db_url = f"https://{project_id}.firebaseio.com"
 
 def calculate_bin_capacity(diameter, height):
     return np.pi * (diameter / 2) ** 2 * height
@@ -109,10 +107,14 @@ st.title("Grain Storage Bin Digital Twin")
 user_id = st.text_input("Enter User ID")
 
 if user_id:
-    # Retrieve bins for the user from Firebase
-    bins_ref = db.reference(f'users/{user_id}/bins')
-    bins_data = bins_ref.get() or []
-    st.session_state.bins = bins_data
+    # Retrieve bins for the user from Firebase using REST API
+    bins_ref = f"{db_url}/users/{user_id}/bins.json"
+    response = requests.get(bins_ref)
+    if response.status_code == 200:
+        bins_data = response.json() or []
+        st.session_state.bins = bins_data
+    else:
+        print("Failed to retrieve bins from Firebase.")
 
     selected_bin = st.selectbox("Select Bin", st.session_state.bins)
 
@@ -206,8 +208,12 @@ else:
 st.subheader("Potential Future State")
 st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
 
-# Save inventory to Firebase
-    inventory_ref = db.reference(f'users/{user_id}/inventory/{selected_bin}')
-    inventory_ref.set(inventory.to_dict('records'))
+# Save inventory to Firebase using REST API
+    inventory_ref = f"{db_url}/users/{user_id}/inventory/{selected_bin}.json"
+    response = requests.put(inventory_ref, json=inventory.to_dict('records'))
+    if response.status_code == 200:
+        print("Inventory saved to Firebase successfully.")
+    else:
+        print("Failed to save inventory to Firebase.")
 else:
     st.warning("Please enter a User ID to access the application.")
