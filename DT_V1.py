@@ -8,13 +8,10 @@ def calculate_bin_capacity(diameter, height):
     return np.pi * (diameter / 2) ** 2 * height
 
 def update_inventory(inventory, new_grain_data):
-    if inventory.empty:
-        inventory = new_grain_data
-    else:
-        inventory = pd.concat([inventory, new_grain_data], ignore_index=True)
+    inventory = pd.concat([inventory, new_grain_data], ignore_index=True)
     return inventory
 
-def create_bin_visualization(diameter, height, moisture_data):
+def create_bin_visualization(diameter, height, inventory):
     # Create a cylindrical mesh for the bin
     theta = np.linspace(0, 2 * np.pi, 100)
     z = np.linspace(0, height, 100)
@@ -23,9 +20,10 @@ def create_bin_visualization(diameter, height, moisture_data):
     y = (diameter / 2) * np.sin(theta)
 
     # Create a heatmap based on moisture data
-    moisture_values = moisture_data['Moisture Content (%)'].values
+    moisture_values = inventory['Moisture Content (%)'].values
     moisture_heatmap = np.zeros((100, 100))
-    moisture_heatmap[:len(moisture_values), :] = moisture_values.reshape(-1, 1)
+    for i in range(len(moisture_values)):
+        moisture_heatmap[i:, :] = moisture_values[i]
 
     # Create the 3D figure
     fig = go.Figure(data=[
@@ -40,39 +38,39 @@ def create_bin_visualization(diameter, height, moisture_data):
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
 
+# Bin selection dropdown
+selected_bin = st.selectbox("Select Bin", ["Bin 1"])  # Start with only one bin
+
 # Bin dimensions
 bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
 bin_height = st.number_input("Bin Height (m):", value=20.0)
 bin_capacity = calculate_bin_capacity(bin_diameter, bin_height)
 
-# Initialize inventory dataframe
-inventory_data = {
-    'Date': [],
-    'Grain Type': [],
-    'Volume (m³)': [],
-    'Test Weight (kg/m³)': [],
-    'Moisture Content (%)': []
-}
-inventory = pd.DataFrame(inventory_data)
+# Initialize inventory dataframe for the selected bin
+if f"inventory_{selected_bin}" not in st.session_state:
+    st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Volume (m³)', 'Test Weight (kg/m³)', 'Moisture Content (%)'])
+
+inventory = st.session_state[f"inventory_{selected_bin}"]
 
 # Grain input form
 with st.form(key='grain_input_form'):
     st.subheader("Add Grain to Inventory")
-    grain_type = st.text_input("Grain Type:")
+    commodity = st.selectbox("Commodity", ["Wheat", "Corn", "Oats", "Barley", "Canola", "Soybeans", "Rye"])
     volume = st.number_input("Volume (m³):")
     test_weight = st.number_input("Test Weight (kg/m³):")
     moisture_content = st.number_input("Moisture Content (%):")
     submit_button = st.form_submit_button(label='Add Grain')
 
     if submit_button:
-        new_grain_data = {
+        new_grain_data = pd.DataFrame({
             'Date': [datetime.date.today()],
-            'Grain Type': [grain_type],
+            'Commodity': [commodity],
             'Volume (m³)': [volume],
             'Test Weight (kg/m³)': [test_weight],
             'Moisture Content (%)': [moisture_content]
-        }
-        inventory = update_inventory(inventory, pd.DataFrame(new_grain_data))
+        })
+        inventory = update_inventory(inventory, new_grain_data)
+        st.session_state[f"inventory_{selected_bin}"] = inventory
 
 # Display bin capacity
 st.subheader("Bin Capacity")
