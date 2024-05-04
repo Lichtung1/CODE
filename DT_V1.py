@@ -36,7 +36,8 @@ def create_bin_visualization(diameter, height, inventory):
                 moisture_heatmap[start_index:end_index, :] = moisture_values[i]
 
         # Set moisture content outside the grain layers to transparent
-        moisture_heatmap[min(int(grain_heights[-1] / height * 100), 100):, :] = np.nan
+        if len(grain_heights) >= 1:
+            moisture_heatmap[min(int(grain_heights[-1] / height * 100), 100):, :] = np.nan
 
     # Create the 3D figure
     fig = go.Figure(data=[
