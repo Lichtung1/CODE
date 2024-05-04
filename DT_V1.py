@@ -96,8 +96,16 @@ def unload_grain(inventory, mass_to_unload):
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
 
-# Bin selection dropdown
-selected_bin = st.selectbox("Select Bin", ["Bin 1"])  # Start with only one bin
+# Bin management
+if "bins" not in st.session_state:
+    st.session_state.bins = ["Bin 1"]  # Start with one default bin
+
+selected_bin = st.selectbox("Select Bin", st.session_state.bins)
+
+if st.button("Create New Bin"):
+    new_bin_name = f"Bin {len(st.session_state.bins) + 1}"
+    st.session_state.bins.append(new_bin_name)
+    selected_bin = new_bin_name
 
 # Bin dimensions
 bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
