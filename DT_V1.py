@@ -146,8 +146,13 @@ with st.form(key='grain_unload_form'):
 # Display bin capacity
 st.subheader("Bin Capacity")
 st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
-bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
-st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
+if not inventory.empty:
+    test_weight = inventory['Test Weight (kg/m³)'].iloc[-1]  # Get the test weight of the last added grain
+    bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
+    st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
+else:
+    st.write("Bin Capacity (Mass): N/A")
+
 
 # Display current inventory
 st.subheader("Current Inventory")
