@@ -31,8 +31,8 @@ def create_bin_visualization(diameter, height, inventory):
         else:
             moisture_heatmap[int(grain_heights[i-1] / height * 100):int(grain_heights[i] / height * 100), :] = moisture_values[i]
 
-    # Set 0.0% moisture content to transparent
-    moisture_heatmap[moisture_heatmap == 0.0] = np.nan
+    # Set moisture content outside the grain layers to transparent
+    moisture_heatmap[int(grain_heights[-1] / height * 100):, :] = np.nan
 
     # Create the 3D figure
     fig = go.Figure(data=[
@@ -46,7 +46,7 @@ def create_bin_visualization(diameter, height, inventory):
                       title='Grain Storage Bin Moisture Content')
 
     return fig
-
+    
 def create_empty_bin_visualization(diameter, height):
     # Create a cylindrical mesh for the bin
     theta = np.linspace(0, 2 * np.pi, 100)
