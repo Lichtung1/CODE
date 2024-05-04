@@ -4,6 +4,7 @@ import pandas as pd
 import datetime
 import plotly.graph_objects as go
 import firebase_admin
+import requests
 
 # Firebase project ID
 project_id = "digitaltwin-8ae1d"
