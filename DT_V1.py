@@ -31,10 +31,16 @@ def create_bin_visualization(diameter, height, inventory):
         else:
             moisture_heatmap[int(grain_heights[i-1] / height * 100):int(grain_heights[i] / height * 100), :] = moisture_values[i]
 
+    # Set empty space to transparent
+    moisture_heatmap[moisture_heatmap == 0] = np.nan
+
     # Create the 3D figure
     fig = go.Figure(data=[
         go.Surface(x=x, y=y, z=z, surfacecolor=moisture_heatmap, colorscale='Viridis', colorbar=dict(title='Moisture Content (%)'))
     ])
+
+    # Add a transparent outer shell to show the structure of the bin
+    fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=0.1, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']]))
 
     fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'),
                       title='Grain Storage Bin Moisture Content')
