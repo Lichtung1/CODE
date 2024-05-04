@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import datetime
 import plotly.graph_objects as go
-import firebase_admin
 import requests
 
 # Firebase project ID
@@ -123,8 +122,10 @@ if user_id:
         new_bin_name = f"Bin {len(st.session_state.bins) + 1}"
         st.session_state.bins.append(new_bin_name)
         selected_bin = new_bin_name
-        # Update bins in Firebase
-        bins_ref.set(st.session_state.bins)
+        # Update bins in Firebase using REST API
+        response = requests.put(bins_ref, json=st.session_state.bins)
+        if response.status_code != 200:
+            print("Failed to update bins in Firebase.")
 
 # Bin management
 if "bins" not in st.session_state:
@@ -209,12 +210,15 @@ else:
 st.subheader("Potential Future State")
 st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
 
+# Potential future state (not implemented in this mock version)
+st.subheader("Potential Future State")
+st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
+
 # Save inventory to Firebase using REST API
-    inventory_ref = f"{db_url}/users/{user_id}/inventory/{selected_bin}.json"
-    response = requests.put(inventory_ref, json=inventory.to_dict('records'))
-    if response.status_code == 200:
-        print("Inventory saved to Firebase successfully.")
-    else:
-        print("Failed to save inventory to Firebase.")
+inventory_ref = f"{db_url}/users/{user_id}/inventory/{selected_bin}.json"
+response = requests.put(inventory_ref, json=inventory.to_dict('records'))
+if response.status_code == 200:
+    print("Inventory saved to Firebase successfully.")
 else:
-    st.warning("Please enter a User ID to access the application.")
+    print("Failed to save inventory to Firebase.")
+st.warning("Please enter a User ID to access the application.")
