@@ -2,3 +2,4 @@ streamlit
 sympy
 matplotlib
 plotly
+firebase_admin
