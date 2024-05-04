@@ -3,6 +3,15 @@ import numpy as np
 import pandas as pd
 import datetime
 import plotly.graph_objects as go
+import firebase_admin
+from firebase_admin import credentials, db
+
+# Initialize Firebase app (only run this once)
+if not firebase_admin._apps:
+    cred = credentials.Certificate('path/to/your/firebase/credentials.json')
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://your-project.firebaseio.com'
+    })
 
 def calculate_bin_capacity(diameter, height):
     return np.pi * (diameter / 2) ** 2 * height
@@ -96,6 +105,24 @@ def unload_grain(inventory, mass_to_unload):
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
 
+# User authentication (simplified example)
+user_id = st.text_input("Enter User ID")
+
+if user_id:
+    # Retrieve bins for the user from Firebase
+    bins_ref = db.reference(f'users/{user_id}/bins')
+    bins_data = bins_ref.get() or []
+    st.session_state.bins = bins_data
+
+    selected_bin = st.selectbox("Select Bin", st.session_state.bins)
+
+    if st.button("Create New Bin"):
+        new_bin_name = f"Bin {len(st.session_state.bins) + 1}"
+        st.session_state.bins.append(new_bin_name)
+        selected_bin = new_bin_name
+        # Update bins in Firebase
+        bins_ref.set(st.session_state.bins)
+
 # Bin management
 if "bins" not in st.session_state:
     st.session_state.bins = ["Bin 1"]  # Start with one default bin
@@ -178,3 +205,9 @@ else:
 # Potential future state (not implemented in this mock version)
 st.subheader("Potential Future State")
 st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
+
+# Save inventory to Firebase
+    inventory_ref = db.reference(f'users/{user_id}/inventory/{selected_bin}')
+    inventory_ref.set(inventory.to_dict('records'))
+else:
+    st.warning("Please enter a User ID to access the application.")
