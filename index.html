@@ -7,6 +7,7 @@
     <h1>Welcome to my Python Web App</h1>
     <button id="openODESolver">Open ODE Solver App</button>
     <button id="openLaplaceVisualiser">Open Laplace Visualiser App</button>
+    <button id="openJanssenPlotter">Open Janssen Equation Plotter</button>
     <div id="output"></div>
 
     <script>
@@ -21,5 +22,11 @@
             window.open('https://m3rhgqpelbvqetpwkjdumm.streamlit.app/', '_blank');
         });
     </script>
+    <script>
+    // JavaScript code to open the Janssen Equation Plotter
+    document.getElementById('openJanssenPlotter').addEventListener('click', function() {
+        window.open('URL_OF_YOUR_JANSSEN_PLOTTER_APP', '_blank');
+    });
+</script>
 </body>
 </html>
