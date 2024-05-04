@@ -10,9 +10,9 @@ def plot_janssen_equation(rho, g, R, k, mu, h_max):
     pressure_vals = janssen_equation(rho, g, R, k, mu, h_vals)
 
     fig, ax = plt.subplots()
-    ax.plot(pressure_vals, h_vals)
-    ax.set_xlabel('Pressure (Pa)')
-    ax.set_ylabel('Height (m)')
+    ax.plot(h_vals, pressure_vals)
+    ax.set_xlabel('Height (m)')
+    ax.set_ylabel('Pressure (Pa)')
     ax.set_title('Janssen Equation')
     ax.grid(True)
 
