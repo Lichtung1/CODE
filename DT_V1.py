@@ -31,8 +31,8 @@ def create_bin_visualization(diameter, height, inventory):
         else:
             moisture_heatmap[int(grain_heights[i-1] / height * 100):int(grain_heights[i] / height * 100), :] = moisture_values[i]
 
-    # Set empty space to transparent
-    moisture_heatmap[moisture_heatmap == 0] = np.nan
+    # Set 0.0% moisture content to transparent
+    moisture_heatmap[moisture_heatmap == 0.0] = np.nan
 
     # Create the 3D figure
     fig = go.Figure(data=[
@@ -44,6 +44,24 @@ def create_bin_visualization(diameter, height, inventory):
 
     fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'),
                       title='Grain Storage Bin Moisture Content')
+
+    return fig
+
+def create_empty_bin_visualization(diameter, height):
+    # Create a cylindrical mesh for the bin
+    theta = np.linspace(0, 2 * np.pi, 100)
+    z = np.linspace(0, height, 100)
+    theta, z = np.meshgrid(theta, z)
+    x = (diameter / 2) * np.cos(theta)
+    y = (diameter / 2) * np.sin(theta)
+
+    # Create the 3D figure
+    fig = go.Figure(data=[
+        go.Surface(x=x, y=y, z=z, opacity=0.1, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']])
+    ])
+
+    fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'),
+                      title='Empty Grain Storage Bin')
 
     return fig
 
@@ -103,7 +121,8 @@ if not inventory.empty:
     bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory)
     st.plotly_chart(bin_fig)
 else:
-    st.write("No grain data available for visualization.")
+    empty_bin_fig = create_empty_bin_visualization(bin_diameter, bin_height)
+    st.plotly_chart(empty_bin_fig)
 
 # Potential future state (not implemented in this mock version)
 st.subheader("Potential Future State")
