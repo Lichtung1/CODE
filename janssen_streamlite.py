@@ -22,11 +22,14 @@ def plot_janssen_equation(rho, g, R, k, mu, h_max):
 st.title("Janssen Equation Plotter")
 
 rho = st.number_input("Density (kg/m^3):", value=755.0)
-#g = st.number_input("Acceleration due to gravity (m/s^2):", value=9.81)
+g = 9.81  # Acceleration due to gravity (m/s^2)
 R = st.number_input("Bin radius (m):", value=2.3)
 k = st.number_input("Janssen coefficient:", value=0.4)
 mu = st.number_input("Coefficient of friction:", value=0.4)
 h_max = st.number_input("Maximum height (m):", value=60.0)
+
+# Display the value of g
+st.write(f"Acceleration due to gravity: {g} m/s^2")
 
 if st.button('Plot'):
     try:
