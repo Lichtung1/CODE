@@ -19,11 +19,17 @@ def create_bin_visualization(diameter, height, inventory):
     x = (diameter / 2) * np.cos(theta)
     y = (diameter / 2) * np.sin(theta)
 
+    # Calculate the cumulative height of the grain layers
+    grain_heights = inventory['Height (m)'].cumsum()
+
     # Create a heatmap based on moisture data
     moisture_values = inventory['Moisture Content (%)'].values
     moisture_heatmap = np.zeros((100, 100))
     for i in range(len(moisture_values)):
-        moisture_heatmap[i:, :] = moisture_values[i]
+        if i == 0:
+            moisture_heatmap[:int(grain_heights[i] / height * 100), :] = moisture_values[i]
+        else:
+            moisture_heatmap[int(grain_heights[i-1] / height * 100):int(grain_heights[i] / height * 100), :] = moisture_values[i]
 
     # Create the 3D figure
     fig = go.Figure(data=[
@@ -44,11 +50,11 @@ selected_bin = st.selectbox("Select Bin", ["Bin 1"])  # Start with only one bin
 # Bin dimensions
 bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
 bin_height = st.number_input("Bin Height (m):", value=20.0)
-bin_capacity = calculate_bin_capacity(bin_diameter, bin_height)
+bin_capacity_volume = calculate_bin_capacity(bin_diameter, bin_height)
 
 # Initialize inventory dataframe for the selected bin
 if f"inventory_{selected_bin}" not in st.session_state:
-    st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Volume (m³)', 'Test Weight (kg/m³)', 'Moisture Content (%)'])
+    st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m³)', 'Moisture Content (%)', 'Height (m)'])
 
 inventory = st.session_state[f"inventory_{selected_bin}"]
 
@@ -56,25 +62,30 @@ inventory = st.session_state[f"inventory_{selected_bin}"]
 with st.form(key='grain_input_form'):
     st.subheader("Add Grain to Inventory")
     commodity = st.selectbox("Commodity", ["Wheat", "Corn", "Oats", "Barley", "Canola", "Soybeans", "Rye"])
-    volume = st.number_input("Volume (m³):")
+    mass = st.number_input("Mass (tonnes):")
     test_weight = st.number_input("Test Weight (kg/m³):")
     moisture_content = st.number_input("Moisture Content (%):")
     submit_button = st.form_submit_button(label='Add Grain')
 
     if submit_button:
+        volume = mass * 1000 / test_weight  # Convert mass to volume
+        height = volume / (np.pi * (bin_diameter / 2) ** 2)  # Calculate the height of the added grain layer
         new_grain_data = pd.DataFrame({
             'Date': [datetime.date.today()],
             'Commodity': [commodity],
-            'Volume (m³)': [volume],
+            'Mass (tonnes)': [mass],
             'Test Weight (kg/m³)': [test_weight],
-            'Moisture Content (%)': [moisture_content]
+            'Moisture Content (%)': [moisture_content],
+            'Height (m)': [height]
         })
         inventory = update_inventory(inventory, new_grain_data)
         st.session_state[f"inventory_{selected_bin}"] = inventory
 
 # Display bin capacity
 st.subheader("Bin Capacity")
-st.write(f"Bin Capacity: {bin_capacity:.2f} m³")
+st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
+bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
+st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
 
 # Display current inventory
 st.subheader("Current Inventory")
