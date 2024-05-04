@@ -27,15 +27,15 @@ def create_bin_visualization(diameter, height, inventory):
     moisture_heatmap = np.zeros((100, 100))
     for i in range(len(moisture_values)):
         if i == 0:
-            moisture_heatmap[:int(grain_heights[i] / height * 100), :] = moisture_values[i]
+            moisture_heatmap[:min(int(grain_heights[i] / height * 100), 100), :] = moisture_values[i]
         else:
-            moisture_heatmap[int(grain_heights[i-1] / height * 100):int(grain_heights[i] / height * 100), :] = moisture_values[i]
+            start_index = min(int(grain_heights[i-1] / height * 100), 100)
+            end_index = min(int(grain_heights[i] / height * 100), 100)
+            moisture_heatmap[start_index:end_index, :] = moisture_values[i]
 
     # Set moisture content outside the grain layers to transparent
-    if len(grain_heights) == 1:
-        moisture_heatmap[int(grain_heights[0] / height * 100):, :] = np.nan
-    elif len(grain_heights) > 1:
-        moisture_heatmap[int(grain_heights[-1] / height * 100):, :] = np.nan
+    if len(grain_heights) >= 1:
+        moisture_heatmap[min(int(grain_heights[-1] / height * 100), 100):, :] = np.nan
 
     # Create the 3D figure
     fig = go.Figure(data=[
