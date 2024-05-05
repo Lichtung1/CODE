@@ -30,10 +30,10 @@ def create_bin_visualization(diameter, height, inventory):
     # Create a heatmap based on moisture data
     moisture_heatmap = np.zeros((100, 100))
 
-    if not inventory.empty:
+    if not inventory.empty and 'Height_m' in inventory.columns and 'Moisture_Content_percent' in inventory.columns:
         # Calculate the cumulative height of the grain layers
         grain_heights = inventory['Height_m'].cumsum()
-        moisture_values = inventory['Moistur_Content_percentage'].values
+        moisture_values = inventory['Moisture_Content_percent'].values
 
         for i in range(len(moisture_values)):
             if i == 0:
@@ -47,6 +47,8 @@ def create_bin_visualization(diameter, height, inventory):
         if len(grain_heights) > 0:
             last_grain_height_index = min(int(grain_heights.iloc[-1] / height * 100), 99)
             moisture_heatmap[last_grain_height_index+1:, :] = np.nan
+    else:
+        st.warning("Missing 'Height_m' or 'Moisture_Content_percent' column in the inventory DataFrame.")
 
     # Create the 3D figure
     fig = go.Figure(data=[
