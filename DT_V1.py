@@ -17,13 +17,14 @@ def fetch_inventory_data(user_id, bin_id):
     if response.ok:
         data = response.json()
         if data:
-            return pd.DataFrame.from_dict(data, orient='index')
+            # Since data is a list of dictionaries, we can directly convert it to a DataFrame
+            return pd.DataFrame(data)
         else:
-            return pd.DataFrame()
+            return pd.DataFrame()  # Return an empty DataFrame if no data
     else:
         st.error(f"Failed to fetch data: {response.text}")
         return pd.DataFrame()
-
+        
 # Function to update inventory data using HTTP requests
 def update_inventory_data(user_id, bin_id, inventory_data):
     """Update inventory data for a specific user and bin."""
@@ -106,7 +107,23 @@ user_id = 'User1'
 selected_bin = 'Bin1'
 
 # Fetch inventory from Firebase
-inventory = fetch_inventory_data(user_id, selected_bin)
+inventory_df = fetch_inventory_data(user_id, selected_bin)
+
+# Check if the DataFrame is not empty before processing
+if not inventory_df.empty:
+    # Display the inventory data
+    st.write("Current Inventory:", inventory_df)
+
+    # Bin dimensions input (assuming some example static sizes for demo)
+    bin_diameter = st.number_input("Bin Diameter (m):", value=10.0, min_value=1.0, step=0.5)
+    bin_height = st.number_input("Bin Height (m):", value=20.0, min_value=1.0, step=0.5)
+
+    # Generate and display the 3D visualization of the bin's moisture content
+    bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory_df)
+    if bin_fig:
+        st.plotly_chart(bin_fig)
+else:
+    st.error("No inventory data available for the selected bin.")
 
 # Convert fetched data into a DataFrame
 if isinstance(inventory, list):  # Check if data is in list format, which we expect
