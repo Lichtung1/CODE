@@ -5,8 +5,9 @@ import datetime
 import plotly.graph_objects as go
 import requests
 
+
 # Firebase project ID
-project_id = "digitaltwin-8ae1d"
+project_id = "digitaltwin-8ae1d-default-rtdb"
 
 # Firebase Realtime Database URL
 db_url = f"https://{project_id}.firebaseio.com"
