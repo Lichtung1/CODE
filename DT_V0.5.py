@@ -83,7 +83,7 @@ def create_empty_bin_visualization(diameter, height):
 
     # Create the 3D figure
     fig = go.Figure(data=[
-        go.Surface(x=x, y=y, z=z, opacity=0.1, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']])
+        go.Surface(x=x, y=y, z=z, opacity=0.5, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']])
     ])
 
     fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'),
