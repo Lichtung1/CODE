@@ -67,18 +67,24 @@ def unload_grain(user_id, bin_id, mass_to_unload, bin_diameter):
 
     for index, row in inventory_df.iterrows():
         if remaining_mass <= 0:
+            # If no more mass needs to be unloaded, copy the remaining rows as they are
             preserved_rows.append(row)
             continue
 
+        # Check if the row has enough mass to unload
         if remaining_mass >= row['Mass_tonnes']:
+            # Subtract the mass from remaining_mass
             remaining_mass -= row['Mass_tonnes']
+            # Optionally, only append rows that still have grain left
+            if row['Mass_tonnes'] - remaining_mass > 0:
+                row['Mass_tonnes'] = 0  # Set to zero since this layer is fully unloaded
+                preserved_rows.append(row)
         else:
-            new_row = row.copy()
-            new_row['Mass_tonnes'] -= remaining_mass
-            new_row['Height_m'] = new_row['Mass_tonnes'] * 1000 / (new_row['Test_Weight_kg_m3'] * np.pi * (bin_diameter / 2) ** 2)
-            preserved_rows.append(new_row)
-            remaining_mass = 0
-            break  # No more mass to remove, break the loop
+            # Partially unload grain from this layer
+            row['Mass_tonnes'] -= remaining_mass
+            row['Height_m'] = row['Mass_tonnes'] * 1000 / (row['Test_Weight_kg_m3'] * np.pi * (bin_diameter / 2) ** 2)
+            preserved_rows.append(row)
+            remaining_mass = 0  # All required mass has been unloaded
 
     # Reconstruct the DataFrame from the preserved_rows list
     new_inventory = pd.DataFrame(preserved_rows)
