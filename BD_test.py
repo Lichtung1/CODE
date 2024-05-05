@@ -8,29 +8,31 @@ db_url = "https://digitaltwin-8ae1d-default-rtdb.firebaseio.com"
 # Function to fetch inventory data
 def fetch_inventory_data(user_id, bin_id):
     """Fetch inventory data for a specific user and bin."""
-    path = f"/users/{user_id}/{bin_id}/inventory"
-    response = requests.get(f"{db_url}{path}.json")
-    if response.ok:
-        data = response.json()
-        if isinstance(data, list):
-            # If the data is directly a list of inventory items
-            return data
-        elif isinstance(data, dict):
-            # Handle cases where data might be a dictionary containing lists or other structures
-            # Let's assume we might encounter dictionaries where you need to extract lists
-            return [value for key, value in data.items() if isinstance(value, list)]
+    try:
+        path = f"/users/{user_id}/{bin_id}/inventory"
+        response = requests.get(f"{db_url}{path}.json")
+        if response.ok:
+            return response.json() or []
         else:
-            # Return an empty list if data is not as expected
+            st.error("Failed to fetch data: " + response.text)
             return []
-    return None
+    except Exception as e:
+        st.error("An error occurred: " + str(e))
+        return []
 
-# Function to update inventory data
 def update_inventory_data(user_id, bin_id, inventory_data):
     """Update inventory data for a specific user and bin."""
-    path = f"/users/{user_id}/{bin_id}"
-    formatted_data = [{'inventory': item} for item in inventory_data]
-    response = requests.put(f"{db_url}{path}.json", data=json.dumps(formatted_data))
-    return response.json()
+    try:
+        path = f"/users/{user_id}/{bin_id}/inventory"
+        response = requests.put(f"{db_url}{path}.json", data=json.dumps(inventory_data))
+        if response.ok:
+            return response.json()
+        else:
+            st.error("Failed to update data: " + response.text)
+            return None
+    except Exception as e:
+        st.error("An error occurred: " + str(e))
+        return None
 
 # Streamlit interface
 st.title("Grain Storage Bin Inventory Management")
