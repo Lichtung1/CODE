@@ -204,6 +204,7 @@ if user_id:
 
     # Display current inventory
     st.subheader("Current Inventory")
+    print(inventory)
     if not inventory.empty:
         # Convert the string representation to a DataFrame
         inventory_df = pd.DataFrame(inventory.iloc[:, 0].tolist(), columns=['Data'])
