@@ -39,7 +39,7 @@ def create_bin_visualization(diameter, height, inventory):
 
     # Define the position of the colors in terms of the normalized scale (0 to 1)
     custom_colorscale = [
-        [0.0, 'rgba(128,128,128,1)'],  # Grey color for 0
+        [0.0, 'rgba(128,128,128,0.5)'],  # Grey color for 0
         [9/30, 'green'],                # Green color at MC of 9
         [14/30, 'yellow'],              # Yellow color at MC of 14
         [20/30, 'red'],                 # Red color at MC of 20
