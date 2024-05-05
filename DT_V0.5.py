@@ -37,12 +37,15 @@ def create_bin_visualization(diameter, height, inventory):
             last_grain_height_index = min(int(grain_heights.iloc[-1] / height * 100), 99)
             moisture_heatmap[last_grain_height_index+1:, :] = np.nan
 
+    # Define the position of the colors in terms of the normalized scale (0 to 1)
+    green_pos = 9 / 30
+    red_pos = 20 / 30
+    
     custom_colorscale = [
         [0.0, 'rgba(128,128,128,1)'],  # Grey color for 0
-        [0.01, 'rgba(68,1,84,1)'],     # Start of Viridis
-        [0.02, 'rgba(71,44,122,1)'],   # Viridis
-        # ... (Add more color-stops from the Viridis colorscale)
-        [1.0, 'rgba(33,145,140,1)'],   # End of Viridis
+        [green_pos, 'green'],           # Green color at MC of 9
+        [red_pos, 'red'],               # Red color at MC of 20
+        [1.0, 'rgba(33,145,140,1)'],    # Some color (could be Viridis end) at the maximum MC
     ]
     
     fig = go.Figure(data=[
@@ -57,7 +60,6 @@ def create_bin_visualization(diameter, height, inventory):
             colorbar=dict(title='Moisture Content (%)')
         )
     ])
-
     # Add a transparent outer shell to show the structure of the bin
     fig.add_trace(go.Surface(
         x=x, 
