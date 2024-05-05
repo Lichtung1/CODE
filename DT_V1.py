@@ -32,8 +32,8 @@ def create_bin_visualization(diameter, height, inventory):
 
     if not inventory.empty:
         # Calculate the cumulative height of the grain layers
-        grain_heights = inventory['Height (m)'].cumsum()
-        moisture_values = inventory['Moisture Content (%)'].values
+        grain_heights = inventory['Height_m'].cumsum()
+        moisture_values = inventory['Moistur_Content_percentage'].values
 
         for i in range(len(moisture_values)):
             if i == 0:
@@ -80,7 +80,7 @@ def create_empty_bin_visualization(diameter, height):
     return fig
 
 def unload_grain(inventory, mass_to_unload):
-    total_mass = inventory['Mass (tonnes)'].sum()
+    total_mass = inventory['Mass_tonnes'].sum()
     if mass_to_unload > total_mass:
         st.warning(f"Not enough grain to unload. Short by {mass_to_unload - total_mass:.2f} tonnes.")
         return inventory
@@ -89,18 +89,18 @@ def unload_grain(inventory, mass_to_unload):
     new_inventory = pd.DataFrame(columns=inventory.columns)
 
     for index, row in inventory.iloc[::-1].iterrows():
-        if remaining_mass >= row['Mass (tonnes)']:
-            remaining_mass -= row['Mass (tonnes)']
+        if remaining_mass >= row['Mass_tonnes']:
+            remaining_mass -= row['Mass_tonnes']
         else:
             new_row = row.copy()
-            new_row['Mass (tonnes)'] -= remaining_mass
-            new_row['Height (m)'] = new_row['Mass (tonnes)'] * 1000 / (new_row['Test Weight (kg/m3)'] * np.pi * (bin_diameter / 2) ** 2)
+            new_row['Mass_tonnes'] -= remaining_mass
+            new_row['Height_m'] = new_row['Mass_tonnes'] * 1000 / (new_row['Test_Weight_kg_m3'] * np.pi * (bin_diameter / 2) ** 2)
             new_inventory = pd.concat([new_inventory, pd.DataFrame(new_row).T], ignore_index=True)
             break
 
     new_inventory = pd.concat([new_inventory, inventory.iloc[:index]], ignore_index=True)
     return new_inventory
-
+    
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
 
@@ -169,10 +169,10 @@ if user_id:
             new_grain_data = pd.DataFrame({
                 'Date': [datetime.date.today()],
                 'Commodity': [commodity],
-                'Mass (tonnes)': [mass],
-                'Test Weight (kg/m3)': [test_weight],
-                'Moisture Content (%)': [moisture_content],
-                'Height (m)': [height]
+                'Mass_tonnes': [mass],
+                'Test_Weight_kg_m3': [test_weight],
+                'Moisture_Content_percent': [moisture_content],
+                'Height_m': [height]
             })
             inventory = update_inventory(inventory, new_grain_data)
             st.session_state[f"inventory_{selected_bin}"] = inventory
