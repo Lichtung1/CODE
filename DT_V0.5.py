@@ -96,9 +96,6 @@ def unload_grain(inventory, mass_to_unload):
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
 
-# Streamlit UI
-st.title("Grain Storage Bin Digital Twin")
-
 # Bin management
 if "bins" not in st.session_state:
     st.session_state.bins = ["Bin 1"]  # Start with one default bin
