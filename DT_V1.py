@@ -6,14 +6,12 @@ import plotly.graph_objects as go
 import requests
 import json
 import ast
-import re
 
-# Firebase project ID
+# Firebase project ID and Database URL
 project_id = "digitaltwin-8ae1d-default-rtdb"
-
-# Firebase Realtime Database URL
 db_url = f"https://{project_id}.firebaseio.com"
 
+# Function Definitions
 def calculate_bin_capacity(diameter, height):
     return np.pi * (diameter / 2) ** 2 * height
 
@@ -28,59 +26,41 @@ def create_bin_visualization(diameter, height, inventory):
     theta, z = np.meshgrid(theta, z)
     x = (diameter / 2) * np.cos(theta)
     y = (diameter / 2) * np.sin(theta)
-
-    # Create a heatmap based on moisture data
     moisture_heatmap = np.zeros((100, 100))
-
+    
     if not inventory.empty and 'Height_m' in inventory.columns and 'Moisture_Content_percent' in inventory.columns:
-        # Calculate the cumulative height of the grain layers
         grain_heights = inventory['Height_m'].cumsum()
         moisture_values = inventory['Moisture_Content_percent'].values
-
+        
         for i in range(len(moisture_values)):
-            if i == 0:
-                moisture_heatmap[:min(int(grain_heights[i] / height * 100), 100), :] = moisture_values[i]
-            else:
-                start_index = min(int(grain_heights[i-1] / height * 100), 100)
-                end_index = min(int(grain_heights[i] / height * 100), 100)
-                moisture_heatmap[start_index:end_index, :] = moisture_values[i]
-
-        # Set moisture content outside the grain layers to transparent
+            start_index = min(int(grain_heights[i-1] / height * 100), 100) if i != 0 else 0
+            end_index = min(int(grain_heights[i] / height * 100), 100)
+            moisture_heatmap[start_index:end_index, :] = moisture_values[i]
+        
         if len(grain_heights) > 0:
             last_grain_height_index = min(int(grain_heights.iloc[-1] / height * 100), 99)
             moisture_heatmap[last_grain_height_index+1:, :] = np.nan
-    else:
-        st.warning("Missing 'Height_m' or 'Moisture_Content_percent' column in the inventory DataFrame.")
-
-    # Create the 3D figure
+    
     fig = go.Figure(data=[
         go.Surface(x=x, y=y, z=z, surfacecolor=moisture_heatmap, colorscale='Viridis', colorbar=dict(title='Moisture Content (%)'))
     ])
-
-    # Add a transparent outer shell to show the structure of the bin
     fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=0.1, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']]))
-
     fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'),
                       title='Grain Storage Bin Moisture Content')
-
     return fig
 
 def create_empty_bin_visualization(diameter, height):
-    # Create a cylindrical mesh for the bin
     theta = np.linspace(0, 2 * np.pi, 100)
     z = np.linspace(0, height, 100)
     theta, z = np.meshgrid(theta, z)
     x = (diameter / 2) * np.cos(theta)
     y = (diameter / 2) * np.sin(theta)
-
-    # Create the 3D figure
+    
     fig = go.Figure(data=[
         go.Surface(x=x, y=y, z=z, opacity=0.1, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']])
     ])
-
     fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'),
                       title='Empty Grain Storage Bin')
-
     return fig
 
 def unload_grain(inventory, mass_to_unload):
@@ -117,59 +97,48 @@ def fix_dict_format(data):
         return corrected
     else:
         raise ValueError("Unsupported data type for fix_dict_format")
-    
-# Streamlit UI
+
+# Streamlit UI Setup
 st.title("Grain Storage Bin Digital Twin")
 
 # User authentication (simplified example)
 user_id = st.text_input("Enter User ID")
 
 if user_id:
-    # Retrieve bins and inventory data for the user from Firebase using REST API
     bins_ref = f"{db_url}/users/{user_id}/bins.json"
     response = requests.get(bins_ref)
     if response.status_code == 200:
         bins_data = response.json() or {}
         st.session_state.bins = list(bins_data.keys())
-        
-        # Retrieve inventory data for each bin
-        for bin_name in st.session_state.bins:
-            inventory_ref = f"{db_url}/users/{user_id}/{bin_name}.json"
-            inventory_response = requests.get(inventory_ref)
-            if inventory_response.status_code == 200:
-                inventory_data = inventory_response.json() or []
-                st.session_state[f"inventory_{bin_name}"] = pd.DataFrame(inventory_data)
-            else:
-                st.session_state[f"inventory_{bin_name}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m3)', 'Moisture Content (%)', 'Height (m)'])
     else:
-        st.warning("Failed to retrieve bins from Firebase.")
-        st.stop()  # Stop execution if bins retrieval fails
-    
-    if not st.session_state.bins:
+        st.error("Failed to retrieve bins from Firebase.")
+        st.stop()
+
+    if not st.session_state.get('bins', []):
         st.warning("No bins found for the user.")
-        st.stop()  # Stop execution if no bins are found
-    
+        st.stop()
+
     selected_bin = st.selectbox("Select Bin", st.session_state.bins)
 
-    if st.button("Create New Bin"):
-        new_bin_name = f"Bin {len(st.session_state.bins) + 1}"
-        st.session_state.bins.append(new_bin_name)
-        selected_bin = new_bin_name
-        # Update bins in Firebase using REST API
-        response = requests.put(bins_ref, json=st.session_state.bins)
-        if response.status_code != 200:
-            print("Failed to update bins in Firebase.")
-
-    # Bin dimensions
-    bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
-    bin_height = st.number_input("Bin Height (m):", value=20.0)
-    bin_capacity_volume = calculate_bin_capacity(bin_diameter, bin_height)
-
-    # Initialize inventory dataframe for the selected bin
+    # Initialize or retrieve existing inventory dataframe for the selected bin
     if f"inventory_{selected_bin}" not in st.session_state:
-        st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m3)', 'Moisture Content (%)', 'Height (m)'])
+        inventory_ref = f"{db_url}/users/{user_id}/{selected_bin}/inventory.json"
+        inventory_response = requests.get(inventory_ref)
+        if inventory_response.status_code == 200:
+            inventory_data = inventory_response.json() or []
+            st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(inventory_data)
+        else:
+            st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame()
+            st.error(f"Failed to retrieve inventory for {selected_bin}.")
 
     inventory = st.session_state[f"inventory_{selected_bin}"]
+
+    # Display current inventory
+    st.subheader("Current Inventory")
+    if not inventory.empty:
+        st.dataframe(inventory)
+    else:
+        st.write("No inventory data available for the selected bin.")
 
     # Grain input form
     with st.form(key='grain_input_form'):
@@ -203,24 +172,6 @@ if user_id:
         if unload_button:
             inventory = unload_grain(inventory, mass_to_unload)
             st.session_state[f"inventory_{selected_bin}"] = inventory
-
-    # Display current inventory
-    st.subheader("Current Inventory")
-    if selected_bin in st.session_state and not st.session_state[f"inventory_{selected_bin}"].empty:
-        inventory_df = st.session_state[f"inventory_{selected_bin}"]
-        try:
-            # Display the inventory data as a DataFrame directly
-            st.dataframe(inventory_df)
-
-            # Optionally, you can also display each item using st.json for better readability
-            for index, row in inventory_df.iterrows():
-                st.json(row.to_dict())
-
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
-    else:
-        st.write("No inventory data available or bin not selected.")
-                
     # 3D view of the bin with moisture content
     st.subheader("Bin Moisture Content Visualization")
     if not inventory.empty:
@@ -230,39 +181,33 @@ if user_id:
         empty_bin_fig = create_empty_bin_visualization(bin_diameter, bin_height)
         st.plotly_chart(empty_bin_fig)
 
-    # Potential future state (not implemented in this mock version)
-    st.subheader("Potential Future State")
-    st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
-
-    # Save bins to Firebase using REST API
+    # Save bins and inventory to Firebase using REST API
     bins_ref = f"{db_url}/users/{user_id}/bins.json"
-    try:
+    inventory_ref = f"{db_url}/users/{user_id}/{selected_bin}/inventory.json"
+
+    if st.button("Save Changes to Firebase"):
+        # Combine existing bins with newly added bins in session state
         existing_bins_response = requests.get(bins_ref)
-        existing_bins = existing_bins_response.json() if existing_bins_response.status_code == 200 else {}
-        
+        if existing_bins_response.status_code == 200:
+            existing_bins = existing_bins_response.json() or {}
+        else:
+            existing_bins = {}
+
         updated_bins = {**existing_bins, **{bin_name: True for bin_name in st.session_state.bins}}
         response = requests.put(bins_ref, json=updated_bins)
-        
         if response.status_code == 200:
-            print("Bins saved to Firebase successfully.")
+            st.success("Bins updated successfully in Firebase.")
         else:
-            print("Failed to save bins to Firebase.")
-    except Exception as e:
-        print("Error occurred while saving bins to Firebase:")
-        print(str(e))
+            st.error("Failed to update bins in Firebase.")
 
-    # Save inventory to Firebase using REST API
-    inventory_ref = f"{db_url}/users/{user_id}/{selected_bin}.json"
-    try:
+        # Save the current inventory of the selected bin
         inventory_data = inventory.to_dict('records')
         response = requests.put(inventory_ref, json=inventory_data)
         if response.status_code == 200:
-            print("Inventory saved to Firebase successfully.")
+            st.success("Inventory saved to Firebase successfully.")
         else:
-            print("Failed to save inventory to Firebase.")
-    except Exception as e:
-        print("Error occurred while saving inventory to Firebase:")
-        print(str(e))
+            st.error("Failed to save inventory to Firebase.")
 
+# Display messages when user ID is not entered
 else:
     st.warning("Please enter a User ID to access the application.")
