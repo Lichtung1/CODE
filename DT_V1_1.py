@@ -86,9 +86,12 @@ with st.form("inventory_form"):
             # Calculate the height of the grain based on the mass and test weight
             height_m = mass * 1000 / (np.pi * (bin_diameter / 2) ** 2 * test_weight)
             
+            # Get the current time without seconds
+            current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            
             # Create a DataFrame for the new grain data
             new_grain_data = {
-                'Date': datetime.datetime.now().isoformat(),
+                'Date': current_time,
                 'Commodity': commodity,
                 'Mass_tonnes': mass,
                 'Test_Weight_kg_m3': test_weight,
@@ -107,7 +110,6 @@ with st.form("inventory_form"):
             st.success("Inventory updated successfully.")
         else:
             st.error("Test weight must be greater than zero to calculate the height.")
-
 
 # Display the current and possibly updated inventory
 st.subheader("Current Inventory")
