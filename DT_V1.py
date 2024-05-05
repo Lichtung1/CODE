@@ -201,19 +201,16 @@ if user_id:
         st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
     else:
         st.write("Bin Capacity (Mass): N/A")
-    
-
-    import ast
 
     # Display current inventory
     st.subheader("Current Inventory")
     if not inventory.empty:
         try:
-            # Convert the string representation to a list of dictionaries
-            inventory_data = [ast.literal_eval(row) for row in inventory['Inventory']]
+            # Access the 'inventory' column and convert the string representation to a dictionary
+            inventory_data = ast.literal_eval(inventory.iloc[0]['inventory'])
             
-            # Create a new DataFrame from the list of dictionaries
-            inventory_df = pd.DataFrame(inventory_data)
+            # Create a new DataFrame from the dictionary
+            inventory_df = pd.DataFrame([inventory_data])
             
             # Rename the columns for better readability
             inventory_display = inventory_df.rename(columns={
@@ -239,8 +236,8 @@ if user_id:
             })
             
             st.dataframe(styled_inventory)
-        except KeyError:
-            st.write("The 'Inventory' column is not found in the DataFrame.")
+        except (KeyError, IndexError, SyntaxError, ValueError):
+            st.write("Error occurred while processing the inventory data.")
     else:
         st.write("No inventory data available.")
         
