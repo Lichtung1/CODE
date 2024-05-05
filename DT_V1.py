@@ -52,21 +52,33 @@ def create_bin_visualization(diameter, height, inventory):
         return fig
     return None
 
+# Streamlit UI setup
 st.title("Grain Storage Bin Digital Twin")
+
+# User and bin selection
 user_id = st.sidebar.selectbox("Select User ID", ["User1", "User2"])
 selected_bin = st.sidebar.selectbox("Select Bin ID", ["Bin1", "Bin2", "Bin3", "Bin4"])
 
+# Fetch inventory from Firebase
 inventory_df = fetch_inventory_data(user_id, selected_bin)
+
+# Ensure inventory_df is a DataFrame
+if inventory_df.empty:
+    inventory_df = pd.DataFrame(columns=['Date', 'Commodity', 'Mass_tonnes', 'Test_Weight_kg_m3', 'Moisture_Content_percent', 'Height_m'])
+
+# Display current inventory and bin details input
+bin_diameter = st.number_input("Bin Diameter (m):", value=10.0, min_value=1.0, step=0.5)
+bin_height = st.number_input("Bin Height (m):", value=20.0, min_value=1.0, step=0.5)
+
 if not inventory_df.empty:
     st.write("Current Inventory:", inventory_df)
-    bin_diameter = st.number_input("Bin Diameter (m):", value=10.0, min_value=1.0, step=0.5)
-    bin_height = st.number_input("Bin Height (m):", value=20.0, min_value=1.0, step=0.5)
     bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory_df)
     if bin_fig:
         st.plotly_chart(bin_fig)
 else:
     st.error("No inventory data available for the selected bin.")
 
+# Grain input form
 with st.form("inventory_form"):
     st.subheader("Add Grain to Inventory")
     commodity = st.selectbox("Commodity", ["Wheat", "Corn", "Oats", "Barley", "Canola", "Soybeans", "Rye"])
@@ -82,15 +94,19 @@ with st.form("inventory_form"):
             'Mass_tonnes': mass,
             'Test_Weight_kg_m3': test_weight,
             'Moisture_Content_percent': moisture_content,
-            'Height_m': mass * 1000 / (np.pi * (bin_diameter / 2) ** 2 * test_weight)  # Calculate the height of the grain layer added
+            'Height_m': mass * 1000 / (np.pi * (bin_diameter / 2) ** 2 * test_weight)
         }
         inventory_df = inventory_df.append(new_grain_data, ignore_index=True)
         update_inventory_data(user_id, selected_bin, inventory_df.to_dict(orient='records'))
+        st.success("Inventory updated successfully.")
 
-# Display current and updated inventory
+# Display updated inventory and 3D visualization
 st.subheader("Updated Inventory")
 st.write(inventory_df)
+if not inventory_df.empty:
+    updated_bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory_df)
+    st.plotly_chart(updated_bin_fig)
 
-# Future state section as a placeholder
+# Placeholder for future state predictions
 st.subheader("Potential Future State")
 st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
