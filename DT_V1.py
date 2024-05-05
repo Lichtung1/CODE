@@ -190,54 +190,30 @@ if user_id:
             inventory = unload_grain(inventory, mass_to_unload)
             st.session_state[f"inventory_{selected_bin}"] = inventory
 
-    # Display bin capacity
-    st.subheader("Bin Capacity")
-    st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m3")
-    
-
-    if not inventory.empty and 'Test_Weight_kg_m3' in inventory.columns:
-        test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]  # Get the test weight of the last added grain
-        bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
-        st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
-    else:
-        st.write("Bin Capacity (Mass): N/A")
-
     # Display current inventory
     st.subheader("Current Inventory")
     if not inventory.empty:
         try:
             # Access the 'inventory' column and convert the string representation to a dictionary
-            inventory_data = ast.literal_eval(inventory.iloc[0]['inventory'])
+            inventory_data_str = inventory.iloc[0]['inventory']
+            st.text("Inventory Data String:")
+            st.write(inventory_data_str)  # This will display the string representation of the inventory data
+            
+            inventory_data = ast.literal_eval(inventory_data_str)
+            st.text("Inventory Data Dictionary:")
+            st.write(inventory_data)  # This will display the dictionary representation of the inventory data
             
             # Create a new DataFrame from the dictionary
             inventory_df = pd.DataFrame([inventory_data])
+            st.text("Inventory DataFrame:")
+            st.write(inventory_df)  # This will display the DataFrame
+    
+            # ... rest of the code for renaming and styling ...
             
-            # Rename the columns for better readability
-            inventory_display = inventory_df.rename(columns={
-                'Date': 'Date',
-                'Commodity': 'Commodity',
-                'Mass_tonnes': 'Mass (tonnes)',
-                'Test_Weight_kg_m3': 'Test Weight (kg/m³)',
-                'Moisture_Content_percent': 'Moisture Content (%)',
-                'Height_m': 'Height (m)'
-            })
+            st.dataframe(styled_inventory)  # If styled_inventory is a Styler object, this will not work as expected
             
-            # Apply styling to the inventory DataFrame
-            styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
-                {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
-                {'selector': 'td', 'props': [('padding', '5px')]},
-                {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
-                {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
-            ]).format({
-                'Mass (tonnes)': '{:.2f}',
-                'Test Weight (kg/m³)': '{:.2f}',
-                'Moisture Content (%)': '{:.2f}',
-                'Height (m)': '{:.2f}'
-            })
-            
-            st.dataframe(styled_inventory)
-        except (KeyError, IndexError, SyntaxError, ValueError):
-            st.write("Error occurred while processing the inventory data.")
+        except (KeyError, IndexError, SyntaxError, ValueError) as e:
+            st.write("Error occurred while processing the inventory data:", e)
     else:
         st.write("No inventory data available.")
         
