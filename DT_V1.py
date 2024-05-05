@@ -59,7 +59,7 @@ def create_bin_visualization(diameter, height, inventory):
                       title='Grain Storage Bin Moisture Content')
 
     return fig
-    
+
 def create_empty_bin_visualization(diameter, height):
     # Create a cylindrical mesh for the bin
     theta = np.linspace(0, 2 * np.pi, 100)
@@ -127,98 +127,84 @@ if user_id:
         if response.status_code != 200:
             print("Failed to update bins in Firebase.")
 
-# Bin management
-if "bins" not in st.session_state:
-    st.session_state.bins = ["Bin 1"]  # Start with one default bin
+    # Bin dimensions
+    bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
+    bin_height = st.number_input("Bin Height (m):", value=20.0)
+    bin_capacity_volume = calculate_bin_capacity(bin_diameter, bin_height)
 
-selected_bin = st.selectbox("Select Bin", st.session_state.bins)
+    # Initialize inventory dataframe for the selected bin
+    if f"inventory_{selected_bin}" not in st.session_state:
+        st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m³)', 'Moisture Content (%)', 'Height (m)'])
 
-if st.button("Create New Bin"):
-    new_bin_name = f"Bin {len(st.session_state.bins) + 1}"
-    st.session_state.bins.append(new_bin_name)
-    selected_bin = new_bin_name
+    inventory = st.session_state[f"inventory_{selected_bin}"]
 
-# Bin dimensions
-bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
-bin_height = st.number_input("Bin Height (m):", value=20.0)
-bin_capacity_volume = calculate_bin_capacity(bin_diameter, bin_height)
+    # Grain input form
+    with st.form(key='grain_input_form'):
+        st.subheader("Add Grain to Inventory")
+        commodity = st.selectbox("Commodity", ["Wheat", "Corn", "Oats", "Barley", "Canola", "Soybeans", "Rye"])
+        mass = st.number_input("Mass (tonnes):")
+        test_weight = st.number_input("Test Weight (kg/m³):")
+        moisture_content = st.number_input("Moisture Content (%):")
+        submit_button = st.form_submit_button(label='Add Grain')
 
-# Initialize inventory dataframe for the selected bin
-if f"inventory_{selected_bin}" not in st.session_state:
-    st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m³)', 'Moisture Content (%)', 'Height (m)'])
+        if submit_button:
+            volume = mass * 1000 / test_weight  # Convert mass to volume
+            height = volume / (np.pi * (bin_diameter / 2) ** 2)  # Calculate the height of the added grain layer
+            new_grain_data = pd.DataFrame({
+                'Date': [datetime.date.today()],
+                'Commodity': [commodity],
+                'Mass (tonnes)': [mass],
+                'Test Weight (kg/m³)': [test_weight],
+                'Moisture Content (%)': [moisture_content],
+                'Height (m)': [height]
+            })
+            inventory = update_inventory(inventory, new_grain_data)
+            st.session_state[f"inventory_{selected_bin}"] = inventory
 
-inventory = st.session_state[f"inventory_{selected_bin}"]
+    # Grain unload form
+    with st.form(key='grain_unload_form'):
+        st.subheader("Unload Grain from Inventory")
+        mass_to_unload = st.number_input("Mass to Unload (tonnes):")
+        unload_button = st.form_submit_button(label='Unload Grain')
 
-# Grain input form
-with st.form(key='grain_input_form'):
-    st.subheader("Add Grain to Inventory")
-    commodity = st.selectbox("Commodity", ["Wheat", "Corn", "Oats", "Barley", "Canola", "Soybeans", "Rye"])
-    mass = st.number_input("Mass (tonnes):")
-    test_weight = st.number_input("Test Weight (kg/m³):")
-    moisture_content = st.number_input("Moisture Content (%):")
-    submit_button = st.form_submit_button(label='Add Grain')
+        if unload_button:
+            inventory = unload_grain(inventory, mass_to_unload)
+            st.session_state[f"inventory_{selected_bin}"] = inventory
 
-    if submit_button:
-        volume = mass * 1000 / test_weight  # Convert mass to volume
-        height = volume / (np.pi * (bin_diameter / 2) ** 2)  # Calculate the height of the added grain layer
-        new_grain_data = pd.DataFrame({
-            'Date': [datetime.date.today()],
-            'Commodity': [commodity],
-            'Mass (tonnes)': [mass],
-            'Test Weight (kg/m³)': [test_weight],
-            'Moisture Content (%)': [moisture_content],
-            'Height (m)': [height]
-        })
-        inventory = update_inventory(inventory, new_grain_data)
-        st.session_state[f"inventory_{selected_bin}"] = inventory
+    # Display bin capacity
+    st.subheader("Bin Capacity")
+    st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
+    if not inventory.empty:
+        test_weight = inventory['Test Weight (kg/m³)'].iloc[-1]  # Get the test weight of the last added grain
+        bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
+        st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
+    else:
+        st.write("Bin Capacity (Mass): N/A")
 
-# Grain unload form
-with st.form(key='grain_unload_form'):
-    st.subheader("Unload Grain from Inventory")
-    mass_to_unload = st.number_input("Mass to Unload (tonnes):")
-    unload_button = st.form_submit_button(label='Unload Grain')
+    # Display current inventory
+    st.subheader("Current Inventory")
+    st.write(inventory)
 
-    if unload_button:
-        inventory = unload_grain(inventory, mass_to_unload)
-        st.session_state[f"inventory_{selected_bin}"] = inventory
+    # 3D view of the bin with moisture content
+    st.subheader("Bin Moisture Content Visualization")
+    if not inventory.empty:
+        bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory)
+        st.plotly_chart(bin_fig)
+    else:
+        empty_bin_fig = create_empty_bin_visualization(bin_diameter, bin_height)
+        st.plotly_chart(empty_bin_fig)
 
-# Display bin capacity
-st.subheader("Bin Capacity")
-st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
-if not inventory.empty:
-    test_weight = inventory['Test Weight (kg/m³)'].iloc[-1]  # Get the test weight of the last added grain
-    bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
-    st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
+    # Potential future state (not implemented in this mock version)
+    st.subheader("Potential Future State")
+    st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
+
+    # Save inventory to Firebase using REST API
+    inventory_ref = f"{db_url}/users/{user_id}/inventory/{selected_bin}.json"
+    response = requests.put(inventory_ref, json=inventory.to_dict('records'))
+    if response.status_code == 200:
+        print("Inventory saved to Firebase successfully.")
+    else:
+        print("Failed to save inventory to Firebase.")
+
 else:
-    st.write("Bin Capacity (Mass): N/A")
-
-
-# Display current inventory
-st.subheader("Current Inventory")
-st.write(inventory)
-
-# 3D view of the bin with moisture content
-st.subheader("Bin Moisture Content Visualization")
-if not inventory.empty:
-    bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory)
-    st.plotly_chart(bin_fig)
-else:
-    empty_bin_fig = create_empty_bin_visualization(bin_diameter, bin_height)
-    st.plotly_chart(empty_bin_fig)
-
-# Potential future state (not implemented in this mock version)
-st.subheader("Potential Future State")
-st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
-
-# Potential future state (not implemented in this mock version)
-st.subheader("Potential Future State")
-st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
-
-# Save inventory to Firebase using REST API
-inventory_ref = f"{db_url}/users/{user_id}/inventory/{selected_bin}.json"
-response = requests.put(inventory_ref, json=inventory.to_dict('records'))
-if response.status_code == 200:
-    print("Inventory saved to Firebase successfully.")
-else:
-    print("Failed to save inventory to Firebase.")
-st.warning("Please enter a User ID to access the application.")
+    st.warning("Please enter a User ID to access the application.")
