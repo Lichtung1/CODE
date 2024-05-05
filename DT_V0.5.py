@@ -37,7 +37,6 @@ def create_bin_visualization(diameter, height, inventory):
             last_grain_height_index = min(int(grain_heights.iloc[-1] / height * 100), 99)
             moisture_heatmap[last_grain_height_index+1:, :] = np.nan
 
-    # Create the 3D figure
     fig = go.Figure(data=[
         go.Surface(
             x=x, 
@@ -45,8 +44,8 @@ def create_bin_visualization(diameter, height, inventory):
             z=z, 
             surfacecolor=moisture_heatmap, 
             colorscale='Viridis', 
-            cmin=10,  # Set the minimum value for the color scale
-            cmax=30,  # Set the maximum value for the color scale
+            cmin=0,  # Set the minimum value for the color scale slightly below your data range
+            cmax=30,  # Keep the maximum as before or adjust as needed
             colorbar=dict(title='Moisture Content (%)')
         )
     ])
