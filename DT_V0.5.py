@@ -44,7 +44,7 @@ def create_bin_visualization(diameter, height, inventory):
         [14/30, 'yellow'],              # Yellow color at MC of 14
         [20/30, 'red'],                 # Red color at MC of 20
         [1.0, 'red']                    # Use red color for the maximum value as well to avoid other colors
-    
+    ]
     fig = go.Figure(data=[
         go.Surface(
             x=x, 
