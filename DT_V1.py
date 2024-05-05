@@ -234,8 +234,9 @@ if user_id:
             # Display the styled DataFrame using markdown and HTML
             st.markdown(styled_inventory.to_html(), unsafe_allow_html=True)
             
-        except (KeyError, IndexError, SyntaxError, ValueError) as e:
-            st.write("Error occurred while processing the inventory data:", e)
+        except Exception as e:
+            # Log the exception with its type and message
+            st.write(f"An error of type {type(e)} occurred: {str(e)}")
     else:
         st.write("No inventory data available.")
         
