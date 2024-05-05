@@ -193,12 +193,7 @@ if user_id:
     st.subheader("Bin Capacity")
     st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m3")
     
-    # Debugging statements
-    st.write("Inventory DataFrame:")
-    st.write(inventory)
-    st.write("Inventory DataFrame columns:")
-    st.write(inventory.columns)
-    
+
     if not inventory.empty and 'Test_Weight_kg_m3' in inventory.columns:
         test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]  # Get the test weight of the last added grain
         bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
@@ -206,17 +201,25 @@ if user_id:
     else:
         st.write("Bin Capacity (Mass): N/A")
     
-    # Simplified code snippet to test accessing 'Test_Weight_kg_m3'
-    st.subheader("Test Weight")
-    try:
-        test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]
-        st.write(f"Test Weight: {test_weight}")
-    except KeyError as e:
-        st.write(f"Error: {str(e)}")
 
     # Display current inventory
     st.subheader("Current Inventory")
-    st.write(inventory)
+    if not inventory.empty:
+        # Apply styling to the inventory DataFrame
+        styled_inventory = inventory.style.set_properties(**{'text-align': 'center'}).set_table_styles([
+            {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
+            {'selector': 'td', 'props': [('padding', '5px')]},
+            {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
+            {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
+        ]).format({
+            'Mass_tonnes': '{:.2f}',
+            'Test_Weight_kg_m3': '{:.2f}',
+            'Moisture_Content_percent': '{:.2f}',
+            'Height_m': '{:.2f}'
+        })
+        st.dataframe(styled_inventory)
+    else:
+        st.write("No inventory data available.")
 
     # 3D view of the bin with moisture content
     st.subheader("Bin Moisture Content Visualization")
