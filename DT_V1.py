@@ -94,7 +94,7 @@ def unload_grain(inventory, mass_to_unload):
         else:
             new_row = row.copy()
             new_row['Mass (tonnes)'] -= remaining_mass
-            new_row['Height (m)'] = new_row['Mass (tonnes)'] * 1000 / (new_row['Test Weight (kg/m³)'] * np.pi * (bin_diameter / 2) ** 2)
+            new_row['Height (m)'] = new_row['Mass (tonnes)'] * 1000 / (new_row['Test Weight (kg/m3)'] * np.pi * (bin_diameter / 2) ** 2)
             new_inventory = pd.concat([new_inventory, pd.DataFrame(new_row).T], ignore_index=True)
             break
 
@@ -123,7 +123,7 @@ if user_id:
                 inventory_data = inventory_response.json() or []
                 st.session_state[f"inventory_{bin_name}"] = pd.DataFrame(inventory_data)
             else:
-                st.session_state[f"inventory_{bin_name}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m³)', 'Moisture Content (%)', 'Height (m)'])
+                st.session_state[f"inventory_{bin_name}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m3)', 'Moisture Content (%)', 'Height (m)'])
     else:
         st.warning("Failed to retrieve bins from Firebase.")
         st.stop()  # Stop execution if bins retrieval fails
@@ -150,7 +150,7 @@ if user_id:
 
     # Initialize inventory dataframe for the selected bin
     if f"inventory_{selected_bin}" not in st.session_state:
-        st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m³)', 'Moisture Content (%)', 'Height (m)'])
+        st.session_state[f"inventory_{selected_bin}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m3)', 'Moisture Content (%)', 'Height (m)'])
 
     inventory = st.session_state[f"inventory_{selected_bin}"]
 
@@ -159,7 +159,7 @@ if user_id:
         st.subheader("Add Grain to Inventory")
         commodity = st.selectbox("Commodity", ["Wheat", "Corn", "Oats", "Barley", "Canola", "Soybeans", "Rye"])
         mass = st.number_input("Mass (tonnes):")
-        test_weight = st.number_input("Test Weight (kg/m³):")
+        test_weight = st.number_input("Test Weight (kg/m3):")
         moisture_content = st.number_input("Moisture Content (%):")
         submit_button = st.form_submit_button(label='Add Grain')
 
@@ -170,7 +170,7 @@ if user_id:
                 'Date': [datetime.date.today()],
                 'Commodity': [commodity],
                 'Mass (tonnes)': [mass],
-                'Test Weight (kg/m³)': [test_weight],
+                'Test Weight (kg/m3)': [test_weight],
                 'Moisture Content (%)': [moisture_content],
                 'Height (m)': [height]
             })
@@ -189,7 +189,7 @@ if user_id:
 
     # Display bin capacity
     st.subheader("Bin Capacity")
-    st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
+    st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m3")
     if not inventory.empty:
         test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]  # Get the test weight of the last added grain
         bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
