@@ -101,10 +101,11 @@ def fix_dict_format(data):
 # Streamlit UI Setup
 st.title("Grain Storage Bin Digital Twin")
 
-# User authentication (simplified example)
+# User authentication
 user_id = st.text_input("Enter User ID")
 
 if user_id:
+    # Retrieve bins and inventory data for the user from Firebase using REST API
     bins_ref = f"{db_url}/users/{user_id}/bins.json"
     response = requests.get(bins_ref)
     if response.status_code == 200:
@@ -119,6 +120,10 @@ if user_id:
         st.stop()
 
     selected_bin = st.selectbox("Select Bin", st.session_state.bins)
+
+    # Define bin dimensions
+    bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
+    bin_height = st.number_input("Bin Height (m):", value=20.0)
 
     # Initialize or retrieve existing inventory dataframe for the selected bin
     if f"inventory_{selected_bin}" not in st.session_state:
@@ -180,7 +185,7 @@ if user_id:
     else:
         empty_bin_fig = create_empty_bin_visualization(bin_diameter, bin_height)
         st.plotly_chart(empty_bin_fig)
-
+        
     # Save bins and inventory to Firebase using REST API
     bins_ref = f"{db_url}/users/{user_id}/bins.json"
     inventory_ref = f"{db_url}/users/{user_id}/{selected_bin}/inventory.json"
