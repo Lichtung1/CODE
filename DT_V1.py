@@ -105,14 +105,18 @@ def unload_grain(inventory, mass_to_unload):
     return new_inventory
     
 def fix_dict_format(data_str):
-    # Ensures proper formatting of dictionary strings for ast.literal_eval
     try:
         # Try parsing the string to see if it's already correct
-        data = ast.literal_eval(data_str)
+        ast.literal_eval(data_str)
         return data_str
     except SyntaxError:
-        # If there's a syntax error, attempt to fix by adding commas
+        # Fix missing commas between items
         corrected = data_str.replace("\n", ",\n")
+        # Ensure it starts with a brace and ends with one
+        if not corrected.strip().startswith('{'):
+            corrected = '{' + corrected
+        if not corrected.strip().endswith('}'):
+            corrected = corrected + '}'
         return corrected
     
 # Streamlit UI
@@ -205,24 +209,21 @@ if user_id:
     st.subheader("Current Inventory")
     if not inventory.empty:
         try:
-            # Access the 'inventory' column and convert the string representation to a dictionary
             inventory_data_str = inventory.iloc[0]['inventory']
-            st.text("Inventory Data String:")
-            st.write(inventory_data_str)  # This will display the string representation of the inventory data
-            
+            st.text("Original Inventory Data String:")
+            st.write(inventory_data_str)  # Display the original string
+    
             # Fix the inventory data string formatting if necessary
             fixed_inventory_data_str = fix_dict_format(inventory_data_str)
+    
+            st.text("Corrected Inventory Data String:")
+            st.write(fixed_inventory_data_str)  # Display the fixed string
     
             # Convert the corrected string to a dictionary
             inventory_data = ast.literal_eval(fixed_inventory_data_str)
             st.text("Inventory Data Dictionary:")
-            st.write(inventory_data)  # This will display the dictionary representation of the inventory data
-    
-            # Create a new DataFrame from the dictionary
-            inventory_df = pd.DataFrame([inventory_data])
-            st.text("Inventory DataFrame:")
-            st.write(inventory_df)  # This will display the DataFrame
-    
+            st.write(inventory_data)  # Display the dictionary representation
+        
             # Rename the columns for better readability
             inventory_display = inventory_df.rename(columns={
                 'Date': 'Date',
@@ -250,11 +251,10 @@ if user_id:
             st.markdown(styled_inventory.to_html(), unsafe_allow_html=True)
             
         except Exception as e:
-            # Log the exception with its type and message
             st.write(f"An error of type {type(e)} occurred: {str(e)}")
     else:
         st.write("No inventory data available.")
-            
+                
     # 3D view of the bin with moisture content
     st.subheader("Bin Moisture Content Visualization")
     if not inventory.empty:
