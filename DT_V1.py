@@ -208,9 +208,31 @@ if user_id:
             st.text("Inventory DataFrame:")
             st.write(inventory_df)  # This will display the DataFrame
     
-            # ... rest of the code for renaming and styling ...
+            # Rename the columns for better readability
+            inventory_display = inventory_df.rename(columns={
+                'Date': 'Date',
+                'Commodity': 'Commodity',
+                'Mass_tonnes': 'Mass (tonnes)',
+                'Test_Weight_kg_m3': 'Test Weight (kg/m³)',
+                'Moisture_Content_percent': 'Moisture Content (%)',
+                'Height_m': 'Height (m)'
+            })
             
-            st.dataframe(styled_inventory)  # If styled_inventory is a Styler object, this will not work as expected
+            # Apply styling to the inventory DataFrame
+            styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
+                {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
+                {'selector': 'td', 'props': [('padding', '5px')]},
+                {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
+                {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
+            ]).format({
+                'Mass (tonnes)': '{:.2f}',
+                'Test Weight (kg/m³)': '{:.2f}',
+                'Moisture Content (%)': '{:.2f}',
+                'Height (m)': '{:.2f}'
+            })
+            
+            # Display the styled DataFrame using markdown and HTML
+            st.markdown(styled_inventory.to_html(), unsafe_allow_html=True)
             
         except (KeyError, IndexError, SyntaxError, ValueError) as e:
             st.write("Error occurred while processing the inventory data:", e)
