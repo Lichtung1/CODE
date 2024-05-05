@@ -252,7 +252,7 @@ if user_id:
         print(str(e))
 
     # Save inventory to Firebase using REST API
-    inventory_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}/inventory.json"
+    inventory_ref = f"{db_url}/users/{user_id}/{selected_bin}.json"
     try:
         inventory_data = inventory.to_dict('records')
         response = requests.put(inventory_ref, json=inventory_data)
