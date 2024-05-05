@@ -4,7 +4,7 @@ import pandas as pd
 import datetime
 import plotly.graph_objects as go
 import requests
-
+import json
 
 # Firebase project ID
 project_id = "digitaltwin-8ae1d-default-rtdb"
@@ -205,10 +205,11 @@ if user_id:
     st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
 
     # Save inventory to Firebase using REST API
-    bins_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}.json"
+    bins_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}"
+    inventory_ref = f"{bins_ref}/inventory.json"
     try:
         inventory_data = inventory.to_dict('records')
-        response = requests.put(bins_ref, json=inventory_data)
+        response = requests.put(inventory_ref, json=inventory_data)
         if response.status_code == 200:
             print("Inventory saved to Firebase successfully.")
         else:
