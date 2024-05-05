@@ -206,52 +206,20 @@ if user_id:
 
     # Display current inventory
     st.subheader("Current Inventory")
-    if not inventory.empty:
+    if selected_bin in st.session_state and not st.session_state[f"inventory_{selected_bin}"].empty:
+        inventory_df = st.session_state[f"inventory_{selected_bin}"]
         try:
-            # Assuming 'inventory' is a DataFrame, and we need the first row as a dictionary
-            inventory_data = inventory.iloc[0].to_dict()
-    
-            # Checking and handling inventory data based on its type
-            if isinstance(inventory_data, dict):
-                st.text("Inventory Data Dictionary:")
-                st.write(inventory_data)  # Display the dictionary representation
-    
-                # Create a DataFrame from the dictionary
-                inventory_df = pd.DataFrame([inventory_data])
-    
-                # Rename the columns for better readability
-                inventory_display = inventory_df.rename(columns={
-                    'Date': 'Date',
-                    'Commodity': 'Commodity',
-                    'Mass_tonnes': 'Mass (tonnes)',
-                    'Test_Weight_kg_m3': 'Test Weight (kg/m³)',
-                    'Moisture_Content_percent': 'Moisture Content (%)',
-                    'Height_m': 'Height (m)'
-                })
-    
-                # Apply styling to the inventory DataFrame
-                styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
-                    {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
-                    {'selector': 'td', 'props': [('padding', '5px')]},
-                    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
-                    {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
-                ]).format({
-                    'Mass (tonnes)': '{:.2f}',
-                    'Test Weight (kg/m³)': '{:.2f}',
-                    'Moisture Content (%)': '{:.2f}',
-                    'Height (m)': '{:.2f}'
-                })
-    
-                # Display the styled DataFrame using markdown and HTML
-                st.markdown(styled_inventory.to_html(), unsafe_allow_html=True)
-    
-            else:
-                raise ValueError("Inventory data is not in expected dictionary format.")
-    
+            # Display the inventory data as a DataFrame directly
+            st.dataframe(inventory_df)
+
+            # Optionally, you can also display each item using st.json for better readability
+            for index, row in inventory_df.iterrows():
+                st.json(row.to_dict())
+
         except Exception as e:
-            st.write(f"An error of type {type(e)} occurred: {str(e)}")
+            st.error(f"An error occurred: {str(e)}")
     else:
-        st.write("No inventory data available.")
+        st.write("No inventory data available or bin not selected.")
                 
     # 3D view of the bin with moisture content
     st.subheader("Bin Moisture Content Visualization")
