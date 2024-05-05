@@ -55,6 +55,35 @@ def create_bin_visualization(diameter, height, inventory):
         return fig
     return None
 
+def unload_grain(user_id, bin_id, mass_to_unload, bin_diameter):
+    inventory_df = fetch_inventory_data(user_id, bin_id)
+    total_mass = inventory_df['Mass_tonnes'].sum()
+    if mass_to_unload > total_mass:
+        st.warning(f"Not enough grain to unload. Short by {mass_to_unload - total_mass:.2f} tonnes.")
+        return
+
+    remaining_mass = mass_to_unload
+    preserved_rows = []
+
+    for index, row in inventory_df.iterrows():
+        if remaining_mass <= 0:
+            preserved_rows.append(row)
+            continue
+
+        if remaining_mass >= row['Mass_tonnes']:
+            remaining_mass -= row['Mass_tonnes']
+        else:
+            new_row = row.copy()
+            new_row['Mass_tonnes'] -= remaining_mass
+            new_row['Height_m'] = new_row['Mass_tonnes'] * 1000 / (new_row['Test_Weight_kg_m3'] * np.pi * (bin_diameter / 2) ** 2)
+            preserved_rows.append(new_row)
+            remaining_mass = 0
+            break  # No more mass to remove, break the loop
+
+    # Reconstruct the DataFrame from the preserved_rows list
+    new_inventory = pd.DataFrame(preserved_rows)
+    update_inventory_data(user_id, bin_id, new_inventory.to_dict(orient='records'))
+
 st.title("Grain Storage Bin Digital Twin")
 
 user_id = st.sidebar.selectbox("Select User ID", ["User1", "User2"])
@@ -114,6 +143,14 @@ with st.form("inventory_form"):
 # Display the current and possibly updated inventory
 st.subheader("Current Inventory")
 st.write(inventory_df)
+
+# Add an option to unload grain
+st.sidebar.subheader("Unload Grain")
+unload_mass = st.sidebar.number_input("Mass to unload (tonnes):", min_value=0.0, format='%.2f')
+unload_button = st.sidebar.button("Unload Grain")
+
+if unload_button:
+    unload_grain(user_id, selected_bin, unload_mass, bin_diameter)
 
 # Display the bin visualization
 st.subheader("Bin Visualization")
