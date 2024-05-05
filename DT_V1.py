@@ -206,8 +206,8 @@ if user_id:
 
     # Save inventory to Firebase using REST API
     inventory_ref = f"{db_url}/users/{user_id}/inventory/{selected_bin}.json"
-    inventory_data = inventory.to_dict('records')
-    response = requests.put(inventory_ref, json=inventory_data)
+    inventory_data = inventory.to_json(orient='records')
+    response = requests.put(inventory_ref, data=inventory_data)
     if response.status_code == 200:
         print("Inventory saved to Firebase successfully.")
     else:
