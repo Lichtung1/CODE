@@ -76,4 +76,38 @@ else:
 with st.form("inventory_form"):
     st.subheader("Add Grain to Inventory")
     commodity = st.selectbox("Commodity", ["Wheat", "Corn", "Oats", "Barley", "Canola", "Soybeans", "Rye"])
-    mass
+    mass = st.number_input("Mass (tonnes):", min_value=0.0, format='%.2f')
+    test_weight = st.number_input("Test Weight (kg/m³):", min_value=0.0, format='%.2f')
+    moisture_content = st.number_input("Moisture Content (%):", min_value=0.0, format='%.2f')
+    submit_button = st.form_submit_button(label='Add Grain')
+
+    if submit_button:
+        if test_weight > 0:  # Check for valid test_weight to avoid ZeroDivisionError
+            height_m = mass * 1000 / (np.pi * (bin_diameter / 2) ** 2 * test_weight)
+            new_grain_data = {
+                'Date': datetime.datetime.now().isoformat(),
+                'Commodity': commodity,
+                'Mass_tonnes': mass,
+                'Test_Weight_kg_m3': test_weight,
+                'Moisture_Content_percent': moisture_content,
+                'Height_m': height_m
+            }
+            inventory_df = inventory_df.append(new_grain_data, ignore_index=True)
+            update_inventory_data(user_id, selected_bin, inventory_df.to_dict(orient='records'))
+            st.success("Inventory updated successfully.")
+        else:
+            st.error("Test weight must be greater than zero to calculate the height.")
+
+# Display the updated inventory and possibly refresh the visualization
+st.subheader("Updated Inventory")
+st.write(inventory_df)
+
+# If we have a non-empty DataFrame, update the visualization
+if not inventory_df.empty:
+    updated_bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory_df)
+    st.plotly_chart(updated_bin_fig)
+
+# Future state section as a placeholder
+st.subheader("Potential Future State")
+st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
+
