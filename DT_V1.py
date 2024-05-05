@@ -187,7 +187,7 @@ if user_id:
             inventory = unload_grain(inventory, mass_to_unload)
             st.session_state[f"inventory_{selected_bin}"] = inventory
 
-    # Display bin capacity WITH DEBUGGGGGING
+    # Display bin capacity
     st.subheader("Bin Capacity")
     st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m3")
     
@@ -203,6 +203,14 @@ if user_id:
         st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
     else:
         st.write("Bin Capacity (Mass): N/A")
+    
+    # Simplified code snippet to test accessing 'Test_Weight_kg_m3'
+    st.subheader("Test Weight")
+    try:
+        test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]
+        st.write(f"Test Weight: {test_weight}")
+    except KeyError as e:
+        st.write(f"Error: {str(e)}")
 
     # Display current inventory
     st.subheader("Current Inventory")
