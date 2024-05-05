@@ -23,17 +23,14 @@ def create_bin_visualization(diameter, height, inventory):
     moisture_heatmap = np.zeros((100, 100))
 
     if not inventory.empty:
-        # Calculate the cumulative height of the grain layers
+        inventory = inventory.reset_index(drop=True)  # Ensure indices are continuous
         grain_heights = inventory['Height (m)'].cumsum()
         moisture_values = inventory['Moisture Content (%)'].values
 
         for i in range(len(moisture_values)):
-            if i == 0:
-                moisture_heatmap[:min(int(grain_heights[i] / height * 100), 100), :] = moisture_values[i]
-            else:
-                start_index = min(int(grain_heights[i-1] / height * 100), 100)
-                end_index = min(int(grain_heights[i] / height * 100), 100)
-                moisture_heatmap[start_index:end_index, :] = moisture_values[i]
+            start_index = 0 if i == 0 else min(int(grain_heights[i-1] / height * 100), 99)
+            end_index = min(int(grain_heights[i] / height * 100), 100)
+            moisture_heatmap[start_index:end_index, :] = moisture_values[i]
 
         # Set moisture content outside the grain layers to transparent
         if len(grain_heights) > 0:
