@@ -79,30 +79,29 @@ def unload_grain(inventory, mass_to_unload):
 
     remaining_mass = mass_to_unload
     new_inventory = pd.DataFrame(columns=inventory.columns)
+    
+    # We will use this list to keep tracks of rows that should be added back to the inventory.
+    preserved_rows = []
 
-    # Reverse the inventory for bottom-up processing
-    reversed_inventory = inventory.iloc[::-1]
-
-    # Iterate through the reversed inventory
-    for index, row in reversed_inventory.iterrows():
+    for index, row in inventory.iterrows():
         if remaining_mass <= 0:
             # If no more mass needs to be unloaded, copy the remaining rows as they are
-            new_inventory = pd.concat([reversed_inventory.iloc[index:], new_inventory], ignore_index=True)
-            break
+            preserved_rows.append(row)
+            continue
 
         if remaining_mass >= row['Mass (tonnes)']:
             remaining_mass -= row['Mass (tonnes)']
-            # Do not add this row to the new inventory as it is fully unloaded
+            # Fully unload this layer, do not add to preserved_rows
         else:
             # Update the row to reflect the remaining grain after partial unloading
             new_row = row.copy()
             new_row['Mass (tonnes)'] -= remaining_mass
             new_row['Height (m)'] = new_row['Mass (tonnes)'] * 1000 / (new_row['Test Weight (kg/m³)'] * np.pi * (bin_diameter / 2) ** 2)
-            new_inventory = pd.concat([pd.DataFrame(new_row).T, new_inventory], ignore_index=True)
+            preserved_rows.append(new_row)
             remaining_mass = 0  # All required mass has been unloaded
 
-    # Ensure the DataFrame is in the original order (bottom to top)
-    new_inventory = new_inventory.iloc[::-1].reset_index(drop=True)
+    # Reconstruct the DataFrame from the preserved_rows list
+    new_inventory = pd.DataFrame(preserved_rows, columns=inventory.columns)
     return new_inventory
 
 # Streamlit UI
