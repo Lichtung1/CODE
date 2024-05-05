@@ -187,10 +187,17 @@ if user_id:
             inventory = unload_grain(inventory, mass_to_unload)
             st.session_state[f"inventory_{selected_bin}"] = inventory
 
-    # Display bin capacity
+    # Display bin capacity WITH DEBUGGGGGING
     st.subheader("Bin Capacity")
     st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m3")
-    if not inventory.empty:
+    
+    # Debugging statements
+    st.write("Inventory DataFrame:")
+    st.write(inventory)
+    st.write("Inventory DataFrame columns:")
+    st.write(inventory.columns)
+    
+    if not inventory.empty and 'Test_Weight_kg_m3' in inventory.columns:
         test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]  # Get the test weight of the last added grain
         bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
         st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
