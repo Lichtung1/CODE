@@ -104,6 +104,17 @@ def unload_grain(inventory, mass_to_unload):
     new_inventory = pd.concat([new_inventory, inventory.iloc[:index]], ignore_index=True)
     return new_inventory
     
+def fix_dict_format(data_str):
+    # Ensures proper formatting of dictionary strings for ast.literal_eval
+    try:
+        # Try parsing the string to see if it's already correct
+        data = ast.literal_eval(data_str)
+        return data_str
+    except SyntaxError:
+        # If there's a syntax error, attempt to fix by adding commas
+        corrected = data_str.replace("\n", ",\n")
+        return corrected
+    
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
 
@@ -199,10 +210,14 @@ if user_id:
             st.text("Inventory Data String:")
             st.write(inventory_data_str)  # This will display the string representation of the inventory data
             
-            inventory_data = ast.literal_eval(inventory_data_str)
+            # Fix the inventory data string formatting if necessary
+            fixed_inventory_data_str = fix_dict_format(inventory_data_str)
+    
+            # Convert the corrected string to a dictionary
+            inventory_data = ast.literal_eval(fixed_inventory_data_str)
             st.text("Inventory Data Dictionary:")
             st.write(inventory_data)  # This will display the dictionary representation of the inventory data
-            
+    
             # Create a new DataFrame from the dictionary
             inventory_df = pd.DataFrame([inventory_data])
             st.text("Inventory DataFrame:")
@@ -217,7 +232,7 @@ if user_id:
                 'Moisture_Content_percent': 'Moisture Content (%)',
                 'Height_m': 'Height (m)'
             })
-            
+    
             # Apply styling to the inventory DataFrame
             styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
                 {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
@@ -239,7 +254,7 @@ if user_id:
             st.write(f"An error of type {type(e)} occurred: {str(e)}")
     else:
         st.write("No inventory data available.")
-        
+            
     # 3D view of the bin with moisture content
     st.subheader("Bin Moisture Content Visualization")
     if not inventory.empty:
