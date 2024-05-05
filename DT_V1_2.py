@@ -89,9 +89,10 @@ st.title("Grain Storage Bin Digital Twin")
 user_id = st.sidebar.selectbox("Select User ID", ["User1", "User2"])
 selected_bin = st.sidebar.selectbox("Select Bin ID", ["Bin1", "Bin2", "Bin3", "Bin4"])
 
-inventory_df = fetch_inventory_data(user_id, selected_bin)
-if inventory_df.empty:
-    inventory_df = pd.DataFrame(columns=['Date', 'Commodity', 'Mass_tonnes', 'Test_Weight_kg_m3', 'Moisture_Content_percent', 'Height_m'])
+# Sidebar option to unload grain
+st.sidebar.subheader("Unload Grain")
+unload_mass = st.sidebar.number_input("Mass to unload (tonnes):", min_value=0.0, format='%.2f')
+unload_button = st.sidebar.button("Unload Grain")
 
 bin_diameter = st.number_input("Bin Diameter (m):", value=10.0, min_value=0.1, step=0.1)
 bin_height = st.number_input("Bin Height (m):", value=20.0, min_value=0.1, step=0.1)
@@ -140,25 +141,24 @@ with st.form("inventory_form"):
         else:
             st.error("Test weight must be greater than zero to calculate the height.")
 
-# Display the current and possibly updated inventory
-st.subheader("Current Inventory")
-st.write(inventory_df)
-
-# Add an option to unload grain
-st.sidebar.subheader("Unload Grain")
-unload_mass = st.sidebar.number_input("Mass to unload (tonnes):", min_value=0.0, format='%.2f')
-unload_button = st.sidebar.button("Unload Grain")
-
+# Check if we need to unload grain
 if unload_button:
     unload_grain(user_id, selected_bin, unload_mass, bin_diameter)
 
-# Display the bin visualization
-st.subheader("Bin Visualization")
-if not inventory_df.empty:
+# Always fetch the latest inventory data to display
+inventory_df = fetch_inventory_data(user_id, selected_bin)
+if inventory_df.empty:
+    inventory_df = pd.DataFrame(columns=['Date', 'Commodity', 'Mass_tonnes', 'Test_Weight_kg_m3', 'Moisture_Content_percent', 'Height_m'])
+    st.error("No inventory data available for the selected bin.")
+else:
+    # Display the current and possibly updated inventory
+    st.subheader("Current Inventory")
+    st.write(inventory_df)
+
+    # Display the bin visualization
+    st.subheader("Bin Visualization")
     bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory_df)
     st.plotly_chart(bin_fig)
-else:
-    st.write("No data available for visualization.")
 
 # Future state section as a placeholder
 st.subheader("Potential Future State")
