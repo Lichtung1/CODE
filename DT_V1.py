@@ -204,7 +204,19 @@ if user_id:
 
     # Display current inventory
     st.subheader("Current Inventory")
-    print(inventory)
+    
+    st.write("Inventory DataFrame:")
+    st.write(inventory)
+    
+    st.write("Inventory DataFrame Shape:")
+    st.write(inventory.shape)
+    
+    st.write("Inventory DataFrame Data Types:")
+    st.write(inventory.dtypes)
+    
+    st.write("Inventory DataFrame Head:")
+    st.write(inventory.head())
+    
     if not inventory.empty:
         # Convert the string representation to a DataFrame
         inventory_df = pd.DataFrame(inventory.iloc[:, 0].tolist(), columns=['Data'])
