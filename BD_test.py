@@ -8,14 +8,20 @@ db_url = "https://digitaltwin-8ae1d-default-rtdb.firebaseio.com"
 # Function to fetch inventory data
 def fetch_inventory_data(user_id, bin_id):
     """Fetch inventory data for a specific user and bin."""
-    path = f"/users/{user_id}/{bin_id}"
+    path = f"/users/{user_id}/{bin_id}/inventory"
     response = requests.get(f"{db_url}{path}.json")
     if response.ok:
         data = response.json()
-        if data:
-            # Ensure we're reading the inventory items correctly
-            inventory_items = [item['inventory'] for item in data if 'inventory' in item]
-            return inventory_items
+        if isinstance(data, list):
+            # If the data is directly a list of inventory items
+            return data
+        elif isinstance(data, dict):
+            # Handle cases where data might be a dictionary containing lists or other structures
+            # Let's assume we might encounter dictionaries where you need to extract lists
+            return [value for key, value in data.items() if isinstance(value, list)]
+        else:
+            # Return an empty list if data is not as expected
+            return []
     return None
 
 # Function to update inventory data
