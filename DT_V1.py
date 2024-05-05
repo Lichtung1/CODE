@@ -223,7 +223,10 @@ if user_id:
             inventory_data = ast.literal_eval(fixed_inventory_data_str)
             st.text("Inventory Data Dictionary:")
             st.write(inventory_data)  # Display the dictionary representation
-        
+    
+            # Create a DataFrame from the dictionary
+            inventory_df = pd.DataFrame([inventory_data])
+    
             # Rename the columns for better readability
             inventory_display = inventory_df.rename(columns={
                 'Date': 'Date',
@@ -246,7 +249,7 @@ if user_id:
                 'Moisture Content (%)': '{:.2f}',
                 'Height (m)': '{:.2f}'
             })
-            
+    
             # Display the styled DataFrame using markdown and HTML
             st.markdown(styled_inventory.to_html(), unsafe_allow_html=True)
             
