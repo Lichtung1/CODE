@@ -203,39 +203,44 @@ if user_id:
         st.write("Bin Capacity (Mass): N/A")
     
 
+    import ast
+
     # Display current inventory
     st.subheader("Current Inventory")
     if not inventory.empty:
-        # Convert the string representation to a list of dictionaries
-        inventory_data = [ast.literal_eval(row) for row in inventory['inventory']]
-        
-        # Create a new DataFrame from the list of dictionaries
-        inventory_df = pd.DataFrame(inventory_data)
-        
-        # Rename the columns for better readability
-        inventory_display = inventory_df.rename(columns={
-            'Date': 'Date',
-            'Commodity': 'Commodity',
-            'Mass_tonnes': 'Mass (tonnes)',
-            'Test_Weight_kg_m3': 'Test Weight (kg/m³)',
-            'Moisture_Content_percent': 'Moisture Content (%)',
-            'Height_m': 'Height (m)'
-        })
-        
-        # Apply styling to the inventory DataFrame
-        styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
-            {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
-            {'selector': 'td', 'props': [('padding', '5px')]},
-            {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
-            {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
-        ]).format({
-            'Mass (tonnes)': '{:.2f}',
-            'Test Weight (kg/m³)': '{:.2f}',
-            'Moisture Content (%)': '{:.2f}',
-            'Height (m)': '{:.2f}'
-        })
-        
-        st.dataframe(styled_inventory)
+        try:
+            # Convert the string representation to a list of dictionaries
+            inventory_data = [ast.literal_eval(row) for row in inventory['Inventory']]
+            
+            # Create a new DataFrame from the list of dictionaries
+            inventory_df = pd.DataFrame(inventory_data)
+            
+            # Rename the columns for better readability
+            inventory_display = inventory_df.rename(columns={
+                'Date': 'Date',
+                'Commodity': 'Commodity',
+                'Mass_tonnes': 'Mass (tonnes)',
+                'Test_Weight_kg_m3': 'Test Weight (kg/m³)',
+                'Moisture_Content_percent': 'Moisture Content (%)',
+                'Height_m': 'Height (m)'
+            })
+            
+            # Apply styling to the inventory DataFrame
+            styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
+                {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
+                {'selector': 'td', 'props': [('padding', '5px')]},
+                {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
+                {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
+            ]).format({
+                'Mass (tonnes)': '{:.2f}',
+                'Test Weight (kg/m³)': '{:.2f}',
+                'Moisture Content (%)': '{:.2f}',
+                'Height (m)': '{:.2f}'
+            })
+            
+            st.dataframe(styled_inventory)
+        except KeyError:
+            st.write("The 'Inventory' column is not found in the DataFrame.")
     else:
         st.write("No inventory data available.")
         
