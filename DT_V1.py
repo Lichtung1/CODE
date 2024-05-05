@@ -114,7 +114,12 @@ if user_id:
         bins_data = response.json() or []
         st.session_state.bins = bins_data
     else:
-        print("Failed to retrieve bins from Firebase.")
+        st.warning("Failed to retrieve bins from Firebase.")
+        st.stop()  # Stop execution if bins retrieval fails
+
+    if not st.session_state.bins:
+        st.warning("No bins found for the user.")
+        st.stop()  # Stop execution if no bins are found
 
     selected_bin = st.selectbox("Select Bin", st.session_state.bins)
 
