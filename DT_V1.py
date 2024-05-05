@@ -205,7 +205,7 @@ if user_id:
     st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
 
     # Save inventory to Firebase using REST API
-    inventory_ref = f"{db_url}/users/{user_id}/inventory/{selected_bin}.json"
+    inventory_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}.json"
     inventory_data = inventory.to_json(orient='records')
     response = requests.put(inventory_ref, data=inventory_data)
     if response.status_code == 200:
