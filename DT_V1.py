@@ -191,7 +191,7 @@ if user_id:
     st.subheader("Bin Capacity")
     st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
     if not inventory.empty:
-        test_weight = inventory['Test Weight (kg/m³)'].iloc[-1]  # Get the test weight of the last added grain
+        test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]  # Get the test weight of the last added grain
         bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
         st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
     else:
