@@ -15,7 +15,6 @@ def fetch_inventory_data(user_id, bin_id):
     path = f"users/{user_id}/{bin_id}/inventory.json"
     response = requests.get(f"{db_url}{path}")
     if response.ok:
-        # Convert the fetched data to a DataFrame
         data = response.json()
         if data:
             return pd.DataFrame.from_dict(data, orient='index')
@@ -50,9 +49,8 @@ def create_bin_visualization(diameter, height, inventory):
     moisture_heatmap = np.zeros((100, 100))
 
     if not inventory.empty:
-        inventory = inventory.reset_index(drop=True)  # Ensure indices are continuous
         grain_heights = inventory['Height_m'].cumsum()
-        moisture_values = inventory['Moisture_Content_percent'].values
+        moisture_values = inventory['Moisture_Content_percent']
 
         for i in range(len(moisture_values)):
             start_index = 0 if i == 0 else min(int(grain_heights[i-1] / height * 100), 99)
@@ -100,24 +98,7 @@ def create_bin_visualization(diameter, height, inventory):
 
     return fig
 
-def create_empty_bin_visualization(diameter, height):
-    """Create a 3D visualization of an empty cylindrical bin."""
-    theta = np.linspace(0, 2 * np.pi, 100)
-    z = np.linspace(0, height, 100)
-    theta, z = np.meshgrid(theta, z)
-    x = (diameter / 2) * np.cos(theta)
-    y = (diameter / 2) * np.sin(theta)
-
-    fig = go.Figure(data=[
-        go.Surface(x=x, y=y, z=z, opacity=0.5, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']])
-    ])
-
-    fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'),
-                      title='Empty Grain Storage Bin')
-
-    return fig
-
-# Streamlit UI setup
+#Streamlit UI setup
 st.title("Grain Storage Bin Digital Twin")
 
 # User and bin selection (for simplicity, hardcoded here)
@@ -127,6 +108,12 @@ selected_bin = 'Bin1'
 # Fetch inventory from Firebase
 inventory = fetch_inventory_data(user_id, selected_bin)
 
+# Convert fetched data into a DataFrame
+if isinstance(inventory, list):  # Check if data is in list format, which we expect
+    inventory_df = pd.DataFrame(inventory)
+else:
+    inventory_df = pd.DataFrame()
+
 # Bin dimensions input
 bin_diameter = st.number_input("Bin Diameter (m):", value=10.0)
 bin_height = st.number_input("Bin Height (m):", value=20.0)
@@ -135,8 +122,8 @@ bin_capacity_volume = calculate_bin_capacity(bin_diameter, bin_height)
 # Display bin capacity
 st.subheader("Bin Capacity")
 st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
-if not inventory.empty:
-    test_weight = inventory['Test_Weight_kg_m3'].iloc[-1]  # Assuming the last entry represents the current state
+if not inventory_df.empty:
+    test_weight = inventory_df['Test_Weight_kg_m3'].iloc[-1]  # Get the test weight of the last added grain
     bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass assuming density is based on test weight
     st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
 else:
@@ -160,18 +147,18 @@ with st.form(key='grain_input_form'):
             'Moisture_Content_percent': moisture_content,
             'Height_m': mass * 1000 / (np.pi * (bin_diameter / 2) ** 2 * test_weight)  # Calculate the height of the grain layer added
         }
-        inventory = update_inventory(inventory, new_grain_data)
-        inventory_data_for_firebase = inventory.to_dict(orient='records')
+        inventory_df = inventory_df.append(new_grain_data, ignore_index=True)
+        inventory_data_for_firebase = inventory_df.to_dict(orient='records')
         update_inventory_data(user_id, selected_bin, inventory_data_for_firebase)
 
 # Display current inventory
 st.subheader("Current Inventory")
-st.write(inventory)
+st.write(inventory_df)
 
 # 3D view of the bin with moisture content
 st.subheader("Bin Moisture Content Visualization")
-if not inventory.empty:
-    bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory)
+if not inventory_df.empty:
+    bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory_df)
     st.plotly_chart(bin_fig)
 else:
     empty_bin_fig = create_empty_bin_visualization(bin_diameter, bin_height)
