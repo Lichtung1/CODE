@@ -152,3 +152,32 @@ with st.form(key='grain_unload_form'):
 
     if unload_button:
         inventory = unload_grain(inventory, mass_to_unload)
+        st.session_state[f"inventory_{selected_bin}"] = inventory
+
+# Display bin capacity
+st.subheader("Bin Capacity")
+st.write(f"Bin Capacity (Volume): {bin_capacity_volume:.2f} m³")
+if not inventory.empty:
+    test_weight = inventory['Test Weight (kg/m³)'].iloc[-1]  # Get the test weight of the last added grain
+    bin_capacity_mass = bin_capacity_volume * test_weight / 1000  # Convert volume to mass
+    st.write(f"Bin Capacity (Mass): {bin_capacity_mass:.2f} tonnes")
+else:
+    st.write("Bin Capacity (Mass): N/A")
+
+
+# Display current inventory
+st.subheader("Current Inventory")
+st.write(inventory)
+
+# 3D view of the bin with moisture content
+st.subheader("Bin Moisture Content Visualization")
+if not inventory.empty:
+    bin_fig = create_bin_visualization(bin_diameter, bin_height, inventory)
+    st.plotly_chart(bin_fig)
+else:
+    empty_bin_fig = create_empty_bin_visualization(bin_diameter, bin_height)
+    st.plotly_chart(empty_bin_fig)
+
+# Potential future state (not implemented in this mock version)
+st.subheader("Potential Future State")
+st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
