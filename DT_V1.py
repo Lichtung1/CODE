@@ -205,8 +205,11 @@ if user_id:
     # Display current inventory
     st.subheader("Current Inventory")
     if not inventory.empty:
+        # Convert the string representation to a DataFrame
+        inventory_df = pd.DataFrame([eval(row) for row in inventory.iloc[:, 0]], columns=['Commodity', 'Date', 'Height_m', 'Mass_tonnes', 'Moisture_Content_percent', 'Test_Weight_kg_m3'])
+    
         # Rename the columns for better readability
-        inventory_display = inventory.rename(columns={
+        inventory_display = inventory_df.rename(columns={
             'Date': 'Date',
             'Commodity': 'Commodity',
             'Mass_tonnes': 'Mass (tonnes)',
@@ -231,7 +234,7 @@ if user_id:
         st.dataframe(styled_inventory)
     else:
         st.write("No inventory data available.")
-
+    
     # 3D view of the bin with moisture content
     st.subheader("Bin Moisture Content Visualization")
     if not inventory.empty:
