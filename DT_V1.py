@@ -108,20 +108,30 @@ st.title("Grain Storage Bin Digital Twin")
 user_id = st.text_input("Enter User ID")
 
 if user_id:
-    # Retrieve bins for the user from Firebase using REST API
+    # Retrieve bins and inventory data for the user from Firebase using REST API
     bins_ref = f"{db_url}/users/{user_id}/bins.json"
     response = requests.get(bins_ref)
     if response.status_code == 200:
-        bins_data = response.json() or []
-        st.session_state.bins = bins_data
+        bins_data = response.json() or {}
+        st.session_state.bins = list(bins_data.keys())
+        
+        # Retrieve inventory data for each bin
+        for bin_name in st.session_state.bins:
+            inventory_ref = f"{db_url}/users/{user_id}/bins/{bin_name}/inventory.json"
+            inventory_response = requests.get(inventory_ref)
+            if inventory_response.status_code == 200:
+                inventory_data = inventory_response.json() or []
+                st.session_state[f"inventory_{bin_name}"] = pd.DataFrame(inventory_data)
+            else:
+                st.session_state[f"inventory_{bin_name}"] = pd.DataFrame(columns=['Date', 'Commodity', 'Mass (tonnes)', 'Test Weight (kg/m³)', 'Moisture Content (%)', 'Height (m)'])
     else:
         st.warning("Failed to retrieve bins from Firebase.")
         st.stop()  # Stop execution if bins retrieval fails
-
+    
     if not st.session_state.bins:
         st.warning("No bins found for the user.")
         st.stop()  # Stop execution if no bins are found
-
+    
     selected_bin = st.selectbox("Select Bin", st.session_state.bins)
 
     if st.button("Create New Bin"):
@@ -204,9 +214,25 @@ if user_id:
     st.subheader("Potential Future State")
     st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
 
+    # Save bins to Firebase using REST API
+    bins_ref = f"{db_url}/users/{user_id}/bins.json"
+    try:
+        existing_bins_response = requests.get(bins_ref)
+        existing_bins = existing_bins_response.json() if existing_bins_response.status_code == 200 else {}
+        
+        updated_bins = {**existing_bins, **{bin_name: True for bin_name in st.session_state.bins}}
+        response = requests.put(bins_ref, json=updated_bins)
+        
+        if response.status_code == 200:
+            print("Bins saved to Firebase successfully.")
+        else:
+            print("Failed to save bins to Firebase.")
+    except Exception as e:
+        print("Error occurred while saving bins to Firebase:")
+        print(str(e))
+
     # Save inventory to Firebase using REST API
-    bins_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}"
-    inventory_ref = f"{bins_ref}/inventory.json"
+    inventory_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}/inventory.json"
     try:
         inventory_data = inventory.to_dict('records')
         response = requests.put(inventory_ref, json=inventory_data)
