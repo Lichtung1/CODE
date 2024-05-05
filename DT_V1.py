@@ -204,24 +204,13 @@ if user_id:
 
     # Display current inventory
     st.subheader("Current Inventory")
-    
-    st.write("Inventory DataFrame:")
-    st.write(inventory)
-    
-    st.write("Inventory DataFrame Shape:")
-    st.write(inventory.shape)
-    
-    st.write("Inventory DataFrame Data Types:")
-    st.write(inventory.dtypes)
-    
-    st.write("Inventory DataFrame Head:")
-    st.write(inventory.head())
-    
     if not inventory.empty:
-        # Convert the string representation to a DataFrame
-        inventory_df = pd.DataFrame(inventory.iloc[:, 0].tolist(), columns=['Data'])
-        inventory_df = pd.concat([inventory_df.drop(['Data'], axis=1), inventory_df['Data'].apply(pd.Series)], axis=1)
-    
+        # Convert the string representation to a list of dictionaries
+        inventory_data = [ast.literal_eval(row) for row in inventory['inventory']]
+        
+        # Create a new DataFrame from the list of dictionaries
+        inventory_df = pd.DataFrame(inventory_data)
+        
         # Rename the columns for better readability
         inventory_display = inventory_df.rename(columns={
             'Date': 'Date',
@@ -231,7 +220,7 @@ if user_id:
             'Moisture_Content_percent': 'Moisture Content (%)',
             'Height_m': 'Height (m)'
         })
-    
+        
         # Apply styling to the inventory DataFrame
         styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
             {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
@@ -244,7 +233,7 @@ if user_id:
             'Moisture Content (%)': '{:.2f}',
             'Height (m)': '{:.2f}'
         })
-    
+        
         st.dataframe(styled_inventory)
     else:
         st.write("No inventory data available.")
