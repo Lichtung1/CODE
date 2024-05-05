@@ -5,6 +5,7 @@ import datetime
 import plotly.graph_objects as go
 import requests
 import json
+import ast
 
 # Firebase project ID
 project_id = "digitaltwin-8ae1d-default-rtdb"
