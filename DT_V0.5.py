@@ -37,16 +37,14 @@ def create_bin_visualization(diameter, height, inventory):
             last_grain_height_index = min(int(grain_heights.iloc[-1] / height * 100), 99)
             moisture_heatmap[last_grain_height_index+1:, :] = np.nan
 
-    # Custom colorscale where MC of 0 is grey, and other values follow 'Viridis'
     custom_colorscale = [
         [0.0, 'rgba(128,128,128,1)'],  # Grey color for 0
-        # Assuming your MC values start from 0 and go up to 30,
-        # you need to map a very small value above 0 to the start of the 'Viridis' scale.
-        [0.001, 'Viridis'],  # Start of 'Viridis' scale just above 0
-        [1.0, 'Viridis']  # End of 'Viridis' at the maximum value
+        [0.01, 'rgba(68,1,84,1)'],     # Start of Viridis
+        [0.02, 'rgba(71,44,122,1)'],   # Viridis
+        # ... (Add more color-stops from the Viridis colorscale)
+        [1.0, 'rgba(33,145,140,1)'],   # End of Viridis
     ]
     
-    # Create the 3D figure with the custom color scale
     fig = go.Figure(data=[
         go.Surface(
             x=x, 
@@ -54,9 +52,8 @@ def create_bin_visualization(diameter, height, inventory):
             z=z, 
             surfacecolor=moisture_heatmap, 
             colorscale=custom_colorscale,
-            # Set cmin and cmax to the actual range of your data
-            cmin=0,  # Assuming MC values start at 0
-            cmax=30,  # Assuming max MC value is 30
+            cmin=0,  # The minimum value for your moisture content
+            cmax=30,  # The maximum value for your moisture content
             colorbar=dict(title='Moisture Content (%)')
         )
     ])
