@@ -205,13 +205,17 @@ if user_id:
     st.write("This section will display the potential future state of the grain storage bin based on historical data and predictive models.")
 
     # Save inventory to Firebase using REST API
-    inventory_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}.json"
-    inventory_data = inventory.to_json(orient='records')
-    response = requests.put(inventory_ref, data=inventory_data)
-    if response.status_code == 200:
-        print("Inventory saved to Firebase successfully.")
-    else:
-        print("Failed to save inventory to Firebase.")
+    bins_ref = f"{db_url}/users/{user_id}/bins/{selected_bin}.json"
+    try:
+        inventory_data = inventory.to_dict('records')
+        response = requests.put(bins_ref, json=inventory_data)
+        if response.status_code == 200:
+            print("Inventory saved to Firebase successfully.")
+        else:
+            print("Failed to save inventory to Firebase.")
+    except Exception as e:
+        print("Error occurred while saving inventory to Firebase:")
+        print(str(e))
 
 else:
     st.warning("Please enter a User ID to access the application.")
