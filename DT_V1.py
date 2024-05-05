@@ -105,14 +105,18 @@ def unload_grain(inventory, mass_to_unload):
     new_inventory = pd.concat([new_inventory, inventory.iloc[:index]], ignore_index=True)
     return new_inventory
     
-def fix_dict_format(data_str):
-    # Correct the missing commas and ensure proper JSON formatting
-    corrected = data_str.strip()
-    if not corrected.endswith('}'):
-        corrected += '}'
-    corrected = corrected.replace('\n', '').replace('}', '').replace('{', '')
-    corrected = "{" + ", ".join([item.strip() for item in corrected.split('" ')]) + "}"
-    return corrected
+def fix_dict_format(data):
+    if isinstance(data, dict):
+        return data  # If data is already a dictionary, return it as is
+    elif isinstance(data, str):
+        corrected = data.strip()
+        if not corrected.endswith('}'):
+            corrected += '}'
+        corrected = corrected.replace('\n', '').replace('}', '').replace('{', '')
+        corrected = "{" + ", ".join([item.strip() for item in corrected.split('" ')]) + "}"
+        return corrected
+    else:
+        raise ValueError("Unsupported data type for fix_dict_format")
     
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
@@ -204,50 +208,46 @@ if user_id:
     st.subheader("Current Inventory")
     if not inventory.empty:
         try:
-            inventory_data_str = inventory.iloc[0]['inventory']
-            st.text("Original Inventory Data String:")
-            st.write(inventory_data_str)  # Display the original string
+            # Assuming 'inventory' is a DataFrame, and we need the first row as a dictionary
+            inventory_data = inventory.iloc[0].to_dict()
     
-            # Fix the inventory data string formatting if necessary
-            fixed_inventory_data_str = fix_dict_format(inventory_data_str)
+            # Checking and handling inventory data based on its type
+            if isinstance(inventory_data, dict):
+                st.text("Inventory Data Dictionary:")
+                st.write(inventory_data)  # Display the dictionary representation
     
-            st.text("Corrected Inventory Data String:")
-            st.write(fixed_inventory_data_str)  # Display the fixed string
+                # Create a DataFrame from the dictionary
+                inventory_df = pd.DataFrame([inventory_data])
     
-            # Convert the corrected string to a dictionary
-            inventory_data = ast.literal_eval(fixed_inventory_data_str)
-            st.text("Inventory Data Dictionary:")
-            st.write(inventory_data)  # Display the dictionary representation
+                # Rename the columns for better readability
+                inventory_display = inventory_df.rename(columns={
+                    'Date': 'Date',
+                    'Commodity': 'Commodity',
+                    'Mass_tonnes': 'Mass (tonnes)',
+                    'Test_Weight_kg_m3': 'Test Weight (kg/m³)',
+                    'Moisture_Content_percent': 'Moisture Content (%)',
+                    'Height_m': 'Height (m)'
+                })
     
-            # Create a DataFrame from the dictionary
-            inventory_df = pd.DataFrame([inventory_data])
+                # Apply styling to the inventory DataFrame
+                styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
+                    {'selector': 'td', 'props': [('padding', '5px')]},
+                    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
+                    {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
+                ]).format({
+                    'Mass (tonnes)': '{:.2f}',
+                    'Test Weight (kg/m³)': '{:.2f}',
+                    'Moisture Content (%)': '{:.2f}',
+                    'Height (m)': '{:.2f}'
+                })
     
-            # Rename the columns for better readability
-            inventory_display = inventory_df.rename(columns={
-                'Date': 'Date',
-                'Commodity': 'Commodity',
-                'Mass_tonnes': 'Mass (tonnes)',
-                'Test_Weight_kg_m3': 'Test Weight (kg/m³)',
-                'Moisture_Content_percent': 'Moisture Content (%)',
-                'Height_m': 'Height (m)'
-            })
+                # Display the styled DataFrame using markdown and HTML
+                st.markdown(styled_inventory.to_html(), unsafe_allow_html=True)
     
-            # Apply styling to the inventory DataFrame
-            styled_inventory = inventory_display.style.set_properties(**{'text-align': 'center'}).set_table_styles([
-                {'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', '#000000'), ('font-weight', 'bold')]},
-                {'selector': 'td', 'props': [('padding', '5px')]},
-                {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#f8f8f8')]},
-                {'selector': 'tr:hover', 'props': [('background-color', '#e0e0e0')]}
-            ]).format({
-                'Mass (tonnes)': '{:.2f}',
-                'Test Weight (kg/m³)': '{:.2f}',
-                'Moisture Content (%)': '{:.2f}',
-                'Height (m)': '{:.2f}'
-            })
+            else:
+                raise ValueError("Inventory data is not in expected dictionary format.")
     
-            # Display the styled DataFrame using markdown and HTML
-            st.markdown(styled_inventory.to_html(), unsafe_allow_html=True)
-            
         except Exception as e:
             st.write(f"An error of type {type(e)} occurred: {str(e)}")
     else:
