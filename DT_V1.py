@@ -117,7 +117,7 @@ if user_id:
         
         # Retrieve inventory data for each bin
         for bin_name in st.session_state.bins:
-            inventory_ref = f"{db_url}/users/{user_id}/bins/{bin_name}/inventory.json"
+            inventory_ref = f"{db_url}/users/{user_id}/{bin_name}.json"
             inventory_response = requests.get(inventory_ref)
             if inventory_response.status_code == 200:
                 inventory_data = inventory_response.json() or []
