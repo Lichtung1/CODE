@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import requests
 import json
 import ast
+import re
 
 # Firebase project ID
 project_id = "digitaltwin-8ae1d-default-rtdb"
@@ -106,17 +107,17 @@ def unload_grain(inventory, mass_to_unload):
     
 def fix_dict_format(data_str):
     try:
-        # Try parsing the string to see if it's already correct
-        ast.literal_eval(data_str)
-        return data_str
+        # Directly attempt to convert to dictionary
+        return ast.literal_eval(data_str)
     except SyntaxError:
-        # Fix missing commas between items
-        corrected = data_str.replace("\n", ",\n")
+        # Add missing commas between key-value pairs
+        corrected = re.sub(r'(?<=\w)"', r', "', data_str)
         # Ensure it starts with a brace and ends with one
-        if not corrected.strip().startswith('{'):
+        corrected = corrected.strip()
+        if not corrected.startswith('{'):
             corrected = '{' + corrected
-        if not corrected.strip().endswith('}'):
-            corrected = corrected + '}'
+        if not corrected.endswith('}'):
+            corrected += '}'
         return corrected
     
 # Streamlit UI
