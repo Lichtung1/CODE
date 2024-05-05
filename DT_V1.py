@@ -106,19 +106,13 @@ def unload_grain(inventory, mass_to_unload):
     return new_inventory
     
 def fix_dict_format(data_str):
-    try:
-        # Directly attempt to convert to dictionary
-        return ast.literal_eval(data_str)
-    except SyntaxError:
-        # Add missing commas between key-value pairs
-        corrected = re.sub(r'(?<=\w)"', r', "', data_str)
-        # Ensure it starts with a brace and ends with one
-        corrected = corrected.strip()
-        if not corrected.startswith('{'):
-            corrected = '{' + corrected
-        if not corrected.endswith('}'):
-            corrected += '}'
-        return corrected
+    # Correct the missing commas and ensure proper JSON formatting
+    corrected = data_str.strip()
+    if not corrected.endswith('}'):
+        corrected += '}'
+    corrected = corrected.replace('\n', '').replace('}', '').replace('{', '')
+    corrected = "{" + ", ".join([item.strip() for item in corrected.split('" ')]) + "}"
+    return corrected
     
 # Streamlit UI
 st.title("Grain Storage Bin Digital Twin")
