@@ -38,15 +38,12 @@ def create_bin_visualization(diameter, height, inventory):
             moisture_heatmap[last_grain_height_index+1:, :] = np.nan
 
     # Define the position of the colors in terms of the normalized scale (0 to 1)
-    green_pos = 9 / 30
-    red_pos = 20 / 30
-    
     custom_colorscale = [
         [0.0, 'rgba(128,128,128,1)'],  # Grey color for 0
-        [green_pos, 'green'],           # Green color at MC of 9
-        [red_pos, 'red'],               # Red color at MC of 20
-        [1.0, 'rgba(33,145,140,1)'],    # Some color (could be Viridis end) at the maximum MC
-    ]
+        [9/30, 'green'],                # Green color at MC of 9
+        [14/30, 'yellow'],              # Yellow color at MC of 14
+        [20/30, 'red'],                 # Red color at MC of 20
+        [1.0, 'red']                    # Use red color for the maximum value as well to avoid other colors
     
     fig = go.Figure(data=[
         go.Surface(
