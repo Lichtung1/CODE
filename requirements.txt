@@ -4,3 +4,4 @@ matplotlib
 plotly
 firebase_admin
 requests
+json
