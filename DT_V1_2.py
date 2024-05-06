@@ -75,10 +75,8 @@ def unload_grain(user_id, bin_id, mass_to_unload, bin_diameter):
         if remaining_mass >= row['Mass_tonnes']:
             # Subtract the mass from remaining_mass
             remaining_mass -= row['Mass_tonnes']
-            # Optionally, only append rows that still have grain left
-            if row['Mass_tonnes'] - remaining_mass > 0:
-                row['Mass_tonnes'] = 0  # Set to zero since this layer is fully unloaded
-                preserved_rows.append(row)
+            # Do not append rows where the entire mass has been unloaded
+            continue  # Skip to the next row
         else:
             # Partially unload grain from this layer
             row['Mass_tonnes'] -= remaining_mass
