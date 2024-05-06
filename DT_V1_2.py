@@ -45,9 +45,9 @@ def create_bin_visualization(diameter, height, inventory): #creat a 3D visualiza
             start_index = int((grain_heights[i-1] / height) * 100) if i else 0
             end_index = int((grain_heights[i] / height) * 100)
             moisture_heatmap[start_index:end_index, :] = moisture_values[i]
-        custom_colourscale = [[0.0, 'rgba(128,128,128,1)'], [9/30, 'green'], [14/30, 'yellow'], [20/30, 'red'], [1.0, 'red']]
-        fig = go.Figure(data=go.Surface(x=x, y=y, z=z, surfacecolour=moisture_heatmap, colourscale=custom_colourscale, cmin=0, cmax=30, colourbar=dict(title='Moisture Content (%)')))
-        fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=0.1, colourscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']]))
+        custom_colorscale = [[0.0, 'rgba(128,128,128,1)'], [9/30, 'green'], [14/30, 'yellow'], [20/30, 'red'], [1.0, 'red']]
+        fig = go.Figure(data=go.Surface(x=x, y=y, z=z, surfacecolor=moisture_heatmap, colorscale=custom_colorscale, cmin=0, cmax=30, colorbar=dict(title='Moisture Content (%)')))
+        fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=0.1, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']]))
         fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'), title='Grain Storage Bin Moisture Content')
         return fig
     return None
