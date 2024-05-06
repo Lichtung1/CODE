@@ -9,8 +9,7 @@ import json
 # Firebase Database URL
 db_url = "https://digitaltwin-8ae1d-default-rtdb.firebaseio.com/"
 
-def fetch_inventory_data(user_id, bin_id):
-    """Fetch inventory data for a specific user and bin."""
+def fetch_inventory_data(user_id, bin_id): #get inforation from database
     path = f"users/{user_id}/{bin_id}/inventory.json"
     response = requests.get(f"{db_url}{path}")
     if response.ok:
@@ -23,8 +22,7 @@ def fetch_inventory_data(user_id, bin_id):
         st.error(f"Failed to fetch data: {response.text}")
         return pd.DataFrame()
 
-def update_inventory_data(user_id, bin_id, inventory_data):
-    """Update inventory data for a specific user and bin."""
+def update_inventory_data(user_id, bin_id, inventory_data): #update inventory data for a specific user and bin
     path = f"users/{user_id}/{bin_id}/inventory.json"
     response = requests.put(f"{db_url}{path}", data=json.dumps(inventory_data))
     if not response.ok:
@@ -33,8 +31,7 @@ def update_inventory_data(user_id, bin_id, inventory_data):
 def calculate_bin_capacity(diameter, height):
     return np.pi * (diameter / 2) ** 2 * height
 
-def create_bin_visualization(diameter, height, inventory):
-    """Create a 3D visualization of the bin's moisture content."""
+def create_bin_visualization(diameter, height, inventory): #creat a 3D visualization of the the specific bin's moisture content
     theta = np.linspace(0, 2 * np.pi, 100)
     z = np.linspace(0, height, 100)
     theta, z = np.meshgrid(theta, z)
@@ -48,14 +45,14 @@ def create_bin_visualization(diameter, height, inventory):
             start_index = int((grain_heights[i-1] / height) * 100) if i else 0
             end_index = int((grain_heights[i] / height) * 100)
             moisture_heatmap[start_index:end_index, :] = moisture_values[i]
-        custom_colorscale = [[0.0, 'rgba(128,128,128,1)'], [9/30, 'green'], [14/30, 'yellow'], [20/30, 'red'], [1.0, 'red']]
-        fig = go.Figure(data=go.Surface(x=x, y=y, z=z, surfacecolor=moisture_heatmap, colorscale=custom_colorscale, cmin=0, cmax=30, colorbar=dict(title='Moisture Content (%)')))
-        fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=0.1, colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']]))
+        custom_colourscale = [[0.0, 'rgba(128,128,128,1)'], [9/30, 'green'], [14/30, 'yellow'], [20/30, 'red'], [1.0, 'red']]
+        fig = go.Figure(data=go.Surface(x=x, y=y, z=z, surfacecolour=moisture_heatmap, colourscale=custom_colourscale, cmin=0, cmax=30, colourbar=dict(title='Moisture Content (%)')))
+        fig.add_trace(go.Surface(x=x, y=y, z=z, opacity=0.1, colourscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(128,128,128,0.2)']]))
         fig.update_layout(scene=dict(xaxis_title='X (m)', yaxis_title='Y (m)', zaxis_title='Height (m)'), title='Grain Storage Bin Moisture Content')
         return fig
     return None
 
-def unload_grain(user_id, bin_id, mass_to_unload, bin_diameter):
+def unload_grain(user_id, bin_id, mass_to_unload, bin_diameter): #unload grain from specific bin
     inventory_df = fetch_inventory_data(user_id, bin_id)
     total_mass = inventory_df['Mass_tonnes'].sum()
     if mass_to_unload > total_mass:
@@ -88,6 +85,7 @@ def unload_grain(user_id, bin_id, mass_to_unload, bin_diameter):
     new_inventory = pd.DataFrame(preserved_rows)
     update_inventory_data(user_id, bin_id, new_inventory.to_dict(orient='records'))
 
+#Stream Lit GUI
 st.title("Grain Storage Bin Digital Twin")
 
 user_id = st.sidebar.selectbox("Select User ID", ["User1", "User2"])
@@ -97,7 +95,7 @@ selected_bin = st.sidebar.selectbox("Select Bin ID", ["Bin1", "Bin2", "Bin3", "B
 bin_diameter = st.number_input("Bin Diameter (m):", value=10.0, min_value=0.1, step=0.1)
 bin_height = st.number_input("Bin Height (m):", value=20.0, min_value=0.1, step=0.1)
 
-# Fetch the current inventory data at the beginning to ensure it's available globally
+# Fetch the current inventory so it is available
 inventory_df = fetch_inventory_data(user_id, selected_bin)
 if inventory_df.empty:
     inventory_df = pd.DataFrame(columns=['Date', 'Commodity', 'Mass_tonnes', 'Test_Weight_kg_m3', 'Moisture_Content_percent', 'Height_m'])
