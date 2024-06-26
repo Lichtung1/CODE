@@ -124,7 +124,7 @@ if st.button('Run Calculation'):
 
     # Select parameters based on commodity
     if commodity == 'hard wheat':
-        params = np.array([-0.3143995, 1.126975113, 0.01655364])
+        params = np.array([-0.488, 6.59, 0.0203]) #from turner 2016
     elif commodity == 'soft wheat':
         params = np.array([-0.8034, 8.0876, 0.039415])
     elif commodity == 'corn':
