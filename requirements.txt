@@ -4,3 +4,5 @@ matplotlib
 plotly
 firebase_admin
 requests
+scipy
+numpy
