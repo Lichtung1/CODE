@@ -3,6 +3,7 @@ sympy
 matplotlib
 plotly
 firebase_admin
+firebase-admin
 requests
 scipy
 numpy
