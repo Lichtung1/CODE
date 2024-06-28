@@ -195,6 +195,7 @@ if inventory_df.empty:
 
 # Define commodities with available compaction data
 available_commodities = ["Hard Wheat", "Soft Wheat", "Corn", "Rice"]
+total_grain_height = inventory_df['Height_m'].sum()
 
 # Grain input form
 with st.form("inventory_form"):
@@ -258,7 +259,7 @@ with col1:
     mu = st.number_input('Coefficient of friction', min_value=0.0, max_value=1.0, value=0.36, step=0.01)
 
 with col2:
-    h = st.number_input('Shape factor', min_value=0.1, max_value=5.0, value=1.5, step=0.1)
+    h = st.number_input('Rogers factor', min_value=0.1, max_value=5.0, value=1.5, step=0.1)
     rho0 = st.number_input('Initial Density (kg/m^3)', min_value=500, max_value=2000, value=834, step=1)
 
 # Fixed parameters
@@ -266,26 +267,32 @@ g = 9.81  # m/s^2
 numX = 101  # Number of X points
 numY = 101  # Number of Y points
 
-# Run button for pressure model
+  
+# Before the pressure model calculation
+center_data = []  # List to store center line data for each layer
+
+# Inside the pressure model calculation loop
 if st.button('Run Pressure Model'):
     if inventory_df.empty:
         st.warning("No inventory data available. Please add grain to the inventory first.")
     else:
         # Run the Rogers test calculation
-        x, y, sigmaX_A, sigmaY_A, pressXJans, pressYJans = rogersTest(phi, mu, bin_diameter/2, h, rho0, g, numX, numY, bin_height)
+        x, y, sigmaX_A, sigmaY_A, pressXJans, pressYJans = rogersTest(phi, mu, bin_diameter/2, h, rho0, g, numX, numY, total_grain_height)
 
         # Calculate density for each layer
-        density = np.zeros_like(sigmaY_A)
-        center_data = []  # List to store center line data
-
-        total_height = inventory_df['Height_m'].sum()
+        density_layers = []
         current_height = 0
-
+        
         for index, row in inventory_df.iterrows():
             layer_height = row['Height_m']
             layer_start = int(current_height / bin_height * numY)
             layer_end = int((current_height + layer_height) / bin_height * numY)
             
+            # Use Test Weight as initial density and Moisture Content from the database
+            initial_density = row['Test_Weight_kg_m3']
+            moisture_content = row['Moisture_Content_percent']
+            
+            # Select appropriate parameters based on commodity
             if row['Commodity'].lower() == 'hard wheat':
                 params = np.array([-0.488, 6.59, 0.0203])
             elif row['Commodity'].lower() == 'soft wheat':
@@ -297,54 +304,95 @@ if st.button('Run Pressure Model'):
             else:
                 st.warning(f"No compaction data available for {row['Commodity']}. Using default parameters.")
                 params = np.array([-0.488, 6.59, 0.0203])  # default to hard wheat parameters
-
-            for j in range(layer_start, layer_end):
+        
+            layer_density = np.zeros((layer_end - layer_start, numX))
+            for j in range(layer_end - layer_start):
                 for i in range(numX):
-                    pressure_kPa = sigmaY_A[j, i] / 1000  # Convert Pa to kPa
-                    delta = changeInDensityByPressure(pressure_kPa, params, row['Moisture_Content_percent'])
-                    density[j, i] = row['Test_Weight_kg_m3'] + delta
-                    
-                    if i == 0:  # This is the center line
-                        center_data.append((y[j], pressure_kPa, delta))
-
+                    pressure_kPa = sigmaY_A[layer_start + j, i] / 1000  # Convert Pa to kPa
+                    delta = changeInDensityByPressure(pressure_kPa, params, moisture_content)
+                    layer_density[j, i] = initial_density + delta
+            
+            density_layers.append(layer_density)
             current_height += layer_height
+        
+        # Concatenate all layers into one large 2D array
+        density = np.vstack(density_layers)
+        
+        # Create a mask for the filled part of the bin
+        filled_mask = density > 0
 
+        # Extract the center column from the concatenated density array
+        center_density = density[:, 0]  # Assuming 0 is the center column
+        
+        # Calculate the pressures at the center
+        center_pressures = sigmaY_A[:len(center_density), 0] / 1000  # Convert Pa to kPa
+        
         # Plot center line data
         fig, ax = plt.subplots(figsize=(10, 6))
-        depths, pressures, deltas = zip(*center_data)
-        ax.plot(pressures, deltas, 'b-')
+        
+        # Plot the density
+        ax.plot(center_pressures, center_density, '-', label='Density')
+        
+        # Add horizontal lines to show layer separations
+        current_height = 0
+        for index, row in inventory_df.iterrows():
+            current_height += row['Height_m']
+            layer_depth = bin_height - current_height
+            ax.axhline(y=center_density[int(layer_depth / bin_height * len(center_density))],
+                       color='r', linestyle='--')
+            ax.text(max(center_pressures), center_density[int(layer_depth / bin_height * len(center_density))],
+                    f" {row['Commodity']} - Layer {index+1}", verticalalignment='bottom', horizontalalignment='right')
+        
         ax.set_xlabel("Pressure (kPa)")
-        ax.set_ylabel("Change in Density (kg/m³)")
-        ax.set_title("Change in Density vs Pressure at the Center of the Bin")
+        ax.set_ylabel("Density (kg/m³)")
+        ax.set_title("Density vs Pressure at the Center of the Bin")
         ax.grid(True)
+        ax.legend()
         st.pyplot(fig)
 
         # Create heatmap plots
         fig, axs = plt.subplots(1, 3, figsize=(20, 7))
-
-        im1 = axs[0].imshow(sigmaX_A/1000, extent=[0, bin_diameter/2, bin_height, 0], aspect='auto', cmap='viridis', origin='upper')
+        
+        # X Pressure
+        im1 = axs[0].imshow(sigmaX_A/1000, extent=[0, bin_diameter/2, total_grain_height, 0], aspect='auto', cmap='viridis', origin='upper')
         axs[0].set_title('Horizontal Stress σx')
         axs[0].set_xlabel('Distance from center (m)')
         axs[0].set_ylabel('Depth from top (m)')
         plt.colorbar(im1, ax=axs[0], label='Stress (kPa)')
         
-        im2 = axs[1].imshow(sigmaY_A/1000, extent=[0, bin_diameter/2, bin_height, 0], aspect='auto', cmap='viridis', origin='upper')
+        # Y Pressure
+        im2 = axs[1].imshow(sigmaY_A/1000, extent=[0, bin_diameter/2, total_grain_height, 0], aspect='auto', cmap='viridis', origin='upper')
         axs[1].set_title('Vertical Stress σy')
         axs[1].set_xlabel('Distance from center (m)')
         axs[1].set_ylabel('Depth from top (m)')
         plt.colorbar(im2, ax=axs[1], label='Stress (kPa)')
         
-        im3 = axs[2].imshow(density, extent=[0, bin_diameter/2, bin_height, 0], aspect='auto', cmap='viridis', origin='upper')
+        # Density plot
+        masked_density = np.ma.masked_where(~filled_mask, density)
+        im3 = axs[2].imshow(masked_density, extent=[0, bin_diameter/2, total_grain_height, 0], aspect='auto', cmap='viridis', origin='upper')
         axs[2].set_title('Density')
         axs[2].set_xlabel('Distance from center (m)')
         axs[2].set_ylabel('Depth from top (m)')
-        plt.colorbar(im3, ax=axs[2], label='Density (kg/m^3)')
-
+        cbar = plt.colorbar(im3, ax=axs[2], label='Density (kg/m³)')
+        cbar.set_ticks(np.linspace(masked_density.min(), masked_density.max(), 10))
+        
+        # Add horizontal lines to separate layers
+        current_height = 0
+        for index, row in inventory_df.iterrows():
+            current_height += row['Height_m']
+            axs[2].axhline(y=current_height, color='r', linestyle='--')
+            axs[2].text(bin_diameter/4, current_height - row['Height_m']/2, f"{row['Commodity']} - Layer {index+1}", 
+                        verticalalignment='center', horizontalalignment='center')
+        
+        axs[2].set_ylim(total_grain_height, 0)  # Set y-axis limits to match bin height
+        axs[2].set_ylabel('Depth from top (m)')
+        
         plt.tight_layout()
         st.pyplot(fig)
-
-        # Display average, min, and max density
-        avgDensity = np.mean(density)
+        
+        # Display average, min, and max density (only for the filled part)
+        filled_density = density[filled_mask]
+        avgDensity = np.mean(filled_density)
         st.write(f'Average Bulk Density: {avgDensity:.2f} kg/m^3')
-        st.write(f"Minimum density: {np.min(density):.2f} kg/m^3")
-        st.write(f"Maximum density: {np.max(density):.2f} kg/m^3")
+        st.write(f"Minimum density: {np.min(filled_density):.2f} kg/m^3")
+        st.write(f"Maximum density: {np.max(filled_density):.2f} kg/m^3")
